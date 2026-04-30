@@ -236,12 +236,16 @@ allowed-tools: Bash(semgrep *) Bash(gitleaks *) Bash(trivy *) Read
 **評分軸明文要求「Skill description 能否被 Claude 精準 trigger」→ 用量化證據打**。
 
 #### 設計
-- 每個 skill 一個 `evals/{skill_name}.json`，含 `should_trigger[]`（≥20 條）+ `should_not_trigger[]`（≥20 條）
-- `scripts/run_skill_eval.py`：呼叫 Anthropic API，每 query 跑 3 次取多數，記錄 trigger / not-trigger
+- **跑全 7 個 skill 的 trigger eval**（4 CI/CD + `browser-task` + `sec-extract-10k` + `hello`）。理由：要證明 description 在「**多元 skill 並存**」時還能精準 disambiguate。只測 4 個 CI/CD skill 等於忽視真實情境。
+- 每個 skill 一個 `evals/skill-trigger/{skill_name}.json`，含 `should_trigger[]`（≥20 條）+ `should_not_trigger[]`（≥20 條）。`should_not_trigger` 必須包含「會誤觸發到其他 skill」的 query（例如 `dependency-audit` 的 should-not 應含「scan my dependencies for vulnerabilities」這種容易跑去 `security-scan` 的句子）。
+- `scripts/run_skill_eval.py`：呼叫 LLM API，每 query 跑 3 次取多數，記錄 trigger / not-trigger
 - 60/40 train/test split
-- 5 輪 description iteration：用 Claude meta-prompt 看 train fail case → 改 description → 重測 test
-- 最終 report：每 skill 的 TPR / FPR + 改前改後對照
-- 用 `claude-haiku-4-5-20251001` 跑 eval（成本可控）
+- 5 輪 description iteration：先 baseline 全 7 skill；找 TPR/FPR 最差的 skill 改 description；只 re-test 該 skill；重複 5 輪
+- 最終 report：每 skill 改前/改後 TPR + FPR 對照表，加上「容易混淆的 skill 配對」分析
+- 用 `${TRIGGER_EVAL_MODEL}` 跑 eval（**model 由 user 提供 endpoint，不預設 Haiku**——Haiku trigger 行為可能與 production 用的 Sonnet/Opus 不同，eval 結果不可信）
+
+#### 預估成本
+7 skills × 40 query × 3 runs = 840 calls baseline；4 輪 iteration × 120 calls = 480；總 1320 calls × ~$0.002/call (Sonnet 級) ≈ **$3-5 LLM cost** for full 5-round iteration.
 
 #### 範例 `evals/lint-and-test.json`
 ```json
