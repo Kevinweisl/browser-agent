@@ -235,17 +235,26 @@ allowed-tools: Bash(semgrep *) Bash(gitleaks *) Bash(trivy *) Read
 
 **評分軸明文要求「Skill description 能否被 Claude 精準 trigger」→ 用量化證據打**。
 
-#### 設計
-- **跑全 7 個 skill 的 trigger eval**（4 CI/CD + `browser-task` + `sec-extract-10k` + `hello`）。理由：要證明 description 在「**多元 skill 並存**」時還能精準 disambiguate。只測 4 個 CI/CD skill 等於忽視真實情境。
-- 每個 skill 一個 `evals/skill-trigger/{skill_name}.json`，含 `should_trigger[]`（≥20 條）+ `should_not_trigger[]`（≥20 條）。`should_not_trigger` 必須包含「會誤觸發到其他 skill」的 query（例如 `dependency-audit` 的 should-not 應含「scan my dependencies for vulnerabilities」這種容易跑去 `security-scan` 的句子）。
-- `scripts/run_skill_eval.py`：呼叫 LLM API，每 query 跑 3 次取多數，記錄 trigger / not-trigger
-- 60/40 train/test split
-- 5 輪 description iteration：先 baseline 全 7 skill；找 TPR/FPR 最差的 skill 改 description；只 re-test 該 skill；重複 5 輪
-- 最終 report：每 skill 改前/改後 TPR + FPR 對照表，加上「容易混淆的 skill 配對」分析
-- 用 `${TRIGGER_EVAL_MODEL}` 跑 eval（**model 由 user 提供 endpoint，不預設 Haiku**——Haiku trigger 行為可能與 production 用的 Sonnet/Opus 不同，eval 結果不可信）
+#### 設計（採 Anthropic 自家 skill-creator 的方法論——見 `docs/research/2026-04-30-skill-conventions-research.md`）
+
+- **跑全 7 個 skill 的 trigger eval**（4 CI/CD + `browser-task` + `sec-extract-10k` + `hello`）。理由：要證明 description 在「**多元 skill 並存**」時還能精準 disambiguate。
+- 每個 skill 一個 `evals/skill-trigger/{skill_name}.json`，含 8-10 條 `should_trigger` + 8-10 條 `should_not_trigger`（共 20 queries/skill，**對齊 Anthropic skill-creator 預設**）。
+- `should_not_trigger` **必須包含 sister-skill 的 trigger query**——例如 `lint-and-test` 的 should-not 包含「fix this CVE in lodash」（應導向 `dependency-audit`）、`dependency-audit` 的 should-not 含「scan my code for SQL injection」（應導向 `security-scan`）。研究階段挖到的 jeremylongshore CI/CD skill 災難就是因為沒做這件事。
+- `scripts/run_skill_eval.py`：呼叫 LLM API，每 query 跑 3 次取多數，記錄 trigger/not-trigger
+- **0.4 holdout**（60% train / 40% test，stratified by `should_trigger`）
+- 5 輪 description iteration：找 train fail case → meta-prompt 改 description → re-test。**用 test (held-out) score 選 best 版本，不用 train**（避免 overfit）。
+- 最終 report：每 skill 改前/改後 train + test pass rate + before/after description diff + confusion matrix（哪些 skill pairs 容易混淆）
+- 用 `${TRIGGER_EVAL_MODEL}` 跑 eval（**不預設 Haiku**——trigger 行為與 production 用的 Sonnet/Opus 不同）
 
 #### 預估成本
-7 skills × 40 query × 3 runs = 840 calls baseline；4 輪 iteration × 120 calls = 480；總 1320 calls × ~$0.002/call (Sonnet 級) ≈ **$3-5 LLM cost** for full 5-round iteration.
+7 skills × 20 queries × 3 runs ≈ 420 calls baseline；5 輪 iteration（每輪只重跑 1 worst skill）≈ 4 × 60 = 240 calls；總 ≈ 660 calls × ~$0.003/call (Sonnet 級) ≈ **$2-5 LLM cost** for full 5-round iteration on all 7 skills.
+
+#### Description 規範（依 1024 char 上限 + 研究結論）
+1. 第三人稱、現在式、動詞為主（"Runs ..." / "Detects ..." / "Generates ..."）
+2. 結構：[一句話功能] + [trigger 條件含同義詞] + **明確 DO-NOT-TRIGGER 列表**（指向哪個 sister skill）
+3. front-load 關鍵 use case（被截斷時保留）
+4. **`when_to_use` 不用**（Claude-Code-only，社群慣例 fold 進 description）
+5. **`disable-model-invocation: true` 給 `build-and-release`**（不可逆操作的安全防線）
 
 #### 範例 `evals/lint-and-test.json`
 ```json
