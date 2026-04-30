@@ -51,7 +51,7 @@
 
 ## 2. 系統架構
 
-### 2.1 高層架構圖
+### 2.1 高層架構圖（**ARCHITECTURE UPDATE 2026-04-30**：簡化為 Postgres-only）
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -61,32 +61,32 @@
                                  │
                                  ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                    Zeabur Project (single)                       │
+│              Local: bare-metal Python    /  Zeabur: Buildpack    │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Gateway / API (FastAPI)                                   │  │
+│  │  Gateway / API (FastAPI, uvicorn)                          │  │
 │  │  - POST /skills/:name/invoke (Idempotency-Key header)      │  │
 │  │  - GET  /runs/:id, /runs/:id/stream (SSE)                  │  │
 │  │  - GET  /skills (manifest list)                            │  │
 │  │  - Auth: API key in header                                 │  │
 │  └─────────────────────┬──────────────────────────────────────┘  │
-│                        │                                         │
-│       ┌────────────────┴───────────────┐                         │
-│       ▼                                ▼                         │
-│  ┌─────────┐                    ┌──────────────┐                 │
-│  │ Postgres│◀──── runs ─────────│   Inngest    │                 │
-│  │         │      audit         │ self-hosted  │                 │
-│  │ - runs  │      manifest      │ (single bin) │                 │
-│  │ - skills│                    └───┬───┬───┬──┘                 │
-│  │ - audit │                        │   │   │                    │
-│  └─────────┘                        ▼   ▼   ▼                    │
-│  ┌─────────┐                    ┌────┐ ┌────┐ ┌────┐             │
-│  │  Redis  │◀── idempotency ────│ W1 │ │ W2 │ │ W3 │             │
-│  │ (cache) │   dedup, locks     │ ci │ │ ext│ │brow│             │
-│  └─────────┘                    └────┘ └────┘ └────┘             │
-│                                                                  │
-│  Volumes:  /cache (git clones) ────────►  W1                     │
-│            /profiles (browser sessions) ─►  W3                   │
+│                        │ INSERT runs(status='queued')            │
+│                        ▼                                         │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ Postgres (single source of truth)                          │  │
+│  │  - skills (manifest)        - runs (queue + history)       │  │
+│  │  - audit_events             - selector_cache               │  │
+│  │  - idempotency: UNIQUE (skill_name, idempotency_key)       │  │
+│  │  - dispatch: SELECT ... FOR UPDATE SKIP LOCKED             │  │
+│  └────────────────────────┬───────────────────────────────────┘  │
+│                           │ poll-and-lock                        │
+│             ┌─────────────┼─────────────┐                        │
+│             ▼             ▼             ▼                        │
+│        ┌────────┐   ┌──────────┐  ┌──────────┐                   │
+│        │  W-CI  │   │ W-EXTRA  │  │ W-BROW   │                   │
+│        │(local  │   │(local OR │  │(Zeabur   │                   │
+│        │ proc)  │   │ Zeabur)  │  │ Pro/Dev) │                   │
+│        └────────┘   └──────────┘  └──────────┘                   │
 └──────────────────────────────────────────────────────────────────┘
                                  │
                                  ▼
@@ -98,33 +98,63 @@
                   └─────────────────────────┘
 ```
 
-### 2.2 為何選 Inngest（而非 Temporal / Celery）
-- 單一 binary，Postgres 做 backend
-- 內建 step retry / memoization / cron / concurrency limits
-- 7 天可完成，運維最輕
+### 2.2 為什麼是 Postgres-only（取代原 Inngest + Redis）
 
-### 2.3 各 Worker 的資源配置
+研究階段曾推薦 Inngest（self-hosted）+ Redis。執行前重新檢視：對 7 天 solo project，**Postgres 一個就夠**：
+- **Job queue**：`SELECT ... FROM runs WHERE status='queued' FOR UPDATE SKIP LOCKED LIMIT 1` 是經典 pattern
+- **Idempotency**：`UNIQUE (skill_name, idempotency_key)` 即時去重
+- **Step memoization**：`runs` row 自身的 status state machine + JSONB result_json 已足夠
+- **Selector cache**：`selector_cache` table（已在 schema 中）
+- 移除 Inngest + Redis = 少 2 個服務、少 2 套 SDK、少 2 種 failure mode
 
-| Worker | Image base | RAM | Disk | Notes |
-|---|---|---|---|---|
-| `worker-ci` | alpine + git + node + python + semgrep + gitleaks | 1 GB | volume `/cache` | scale 1-3 |
-| `worker-extractor` | python:3.12 + edgartools + lxml + pdfplumber | 1 GB | - | Task 3 主力 |
-| `worker-browser` | `mcr.microsoft.com/playwright:v1.x-noble` | 2 GB | volume `/profiles` | `--shm-size=2gb` 或 `--disable-dev-shm-usage` |
+### 2.3 Local 開發 vs Zeabur 部署
+
+| 環境 | 怎麼跑 |
+|---|---|
+| **Local dev** | `brew install postgresql@16` + conda env (Python 3.12) + `uvicorn` + python worker process。**沒有 Docker、沒有 Redis、沒有 Inngest**。setup 腳本 idempotent，README 一行 command 重現環境。 |
+| **Zeabur** | 預設用 Buildpack auto-detect (從 `pyproject.toml`)；Postgres 用 marketplace 一鍵；browser worker 因 Playwright 需要明確 base image，寫一個 `Dockerfile.browser`（其他 service 不寫 Dockerfile） |
+
+| Worker | Local | Zeabur |
+|---|---|---|
+| `worker-ci` | `python -m worker_ci` | Buildpack |
+| `worker-extractor` | `python -m worker_extractor` | Buildpack |
+| `worker-browser` | `python -m worker_browser`（需先 `playwright install chromium`） | `Dockerfile.browser` based on `mcr.microsoft.com/playwright:v1.x-noble` |
 
 **部署方案**：
-- **Local 開發**（Day 1-3）：全套 docker-compose 跑在本機，不碰 Zeabur
-- **Zeabur 部署**（Day 4 開始）：先用 Zeabur Dev plan ($5/mo, 4 GB RAM)
+- **Local 開發**（Day 1-3）：bare-metal Postgres + Python，`scripts/dev.sh` 一鍵啟動
+- **Zeabur 部署**（Day 4 開始）：Buildpack 為主，browser worker 用 Dockerfile
 - **Pro plan ($19/mo)** 只在 Day 6/7 browser worker 實測 OOM 時才升級
 - 預估總成本：$5（最差 $19，整個專案週期）
 
 ### 2.4 Skill 呼叫流程（端到端）
 
 1. UI / CLI 送 `POST /skills/sec-extract-10k/invoke` + body `{cik: 320193, accession: "0000320193-24-000123"}` + header `Idempotency-Key: <uuid>`
-2. Gateway 查 Redis idempotency cache → 命中回 cached `run_id`；否則：
-3. Gateway 寫 row 進 Postgres `runs` table、enqueue Inngest event `skill/invoke`、回 `{run_id, status: queued}`
-4. Inngest 路由到對應 worker（mapping by skill name）
-5. Worker 執行步驟（每步是 Inngest `step.run` → 自動 memoize、retry-safe）
-6. 結果寫回 Postgres，UI 用 SSE 訂閱 `/runs/:id/stream`
+2. Gateway 查 `runs` 表 unique index → 命中回 cached `run_id`；否則：
+3. Gateway 寫 row 進 `runs` table（`status='queued'`），回 `{run_id, status: queued}`
+4. Worker process 持續 poll `runs WHERE status='queued' AND worker_target=<self>` (FOR UPDATE SKIP LOCKED)
+5. Worker 取得 row 後 `UPDATE status='running'`，執行 skill logic
+6. 結果寫回 Postgres：`UPDATE runs SET status='completed', result_json=..., completed_at=now()`
+7. UI 用 SSE 訂閱 `/runs/:id/stream` 看 status 變化
+
+### 2.5 Reproducibility（環境可重現）
+
+題目要求公開 repo 給面試官看。**任何人 clone 後 5 行 command 內可跑通本地測試**：
+
+```bash
+# Prerequisites: brew, conda, Python 3.12 via conda
+git clone <repo>
+cd interview_hw
+./scripts/setup.sh           # creates conda env, installs deps, starts postgres, runs migrations
+export ANTHROPIC_API_KEY=...
+./scripts/dev.sh             # starts gateway + workers
+./scripts/test.sh            # runs all pytest suites
+```
+
+依賴鎖定：
+- `pyproject.toml` 為 single source of truth
+- `uv.lock`（或 `requirements.lock`）為精確版本鎖
+- `migrations/00*.sql` 順序編號 + idempotent
+- `.env.example` 列所有必要環境變數
 
 ---
 
