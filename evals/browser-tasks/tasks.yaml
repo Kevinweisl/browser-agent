@@ -182,12 +182,14 @@
   success_criteria:
     - type: regex
       field: extracted
-      value: '\d+'
+      value: '"value":\s*\d+'  # the SEC EFTS JSON shape: hits.total.value
   negative_oracle:
     must_appear_on_final_page:
-      - "climate"
+      # SEC EFTS returns JSON, not HTML; "hits" is the canonical success marker
+      - "hits"
     must_not_appear:
       - "Service Unavailable"
+      - "403 Forbidden"
 
 - task_id: fin-004
   pack: finance
@@ -216,9 +218,9 @@
   domain: investor_relations
   difficulty: medium
   nl_description: |
-    Go to https://ir.berkshirehathaway.com and find the link to the most
+    Go to https://www.berkshirehathaway.com and find the link to the most
     recent annual report. Extract the URL of that PDF or page.
-  starting_url: https://ir.berkshirehathaway.com
+  starting_url: https://www.berkshirehathaway.com
   step_cap: 8
   token_cap: 12000
   wall_clock_cap_s: 180

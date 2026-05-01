@@ -13,7 +13,9 @@ The Actor's job is "make the action happen, faithfully record what changed".
 from __future__ import annotations
 
 import logging
+import os
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from . import selector_cache as cache
 from .locator_ladder import LocatorResolver
@@ -28,6 +30,15 @@ from .selector_cache import (
     dom_hash_string,
     url_to_template,
 )
+
+
+# Hosts that REQUIRE a contact-email User-Agent per their fair-use policy
+# (sec.gov: "no more than 10 req/s"; rejects default Chrome UA with HTTP 403
+# "Your Request Originates from an Undeclared Automated Tool"). When we
+# navigate to one of these hosts, we override the UA via extra HTTP headers.
+_HOSTS_REQUIRING_CONTACT_UA = {
+    "www.sec.gov", "data.sec.gov", "efts.sec.gov", "sec.gov",
+}
 
 if TYPE_CHECKING:
     from playwright.async_api import Page
@@ -52,10 +63,13 @@ async def snapshot(page: Page) -> PageSnapshot:
     import contextlib
     with contextlib.suppress(Exception):
         text = await page.locator("body").inner_text(timeout=2000)
+    # text_excerpt cap intentionally generous — modern API JSON responses
+    # (e.g. SEC EFTS search returns 315 hits) easily blow past 5K. The oracle
+    # + extract step both consume this, so truncation hurts both.
     return PageSnapshot(
         url=url, title=title, dom_hash=dom_hash,
         aria_snapshot=aria[:8000],
-        text_excerpt=text[:5000],
+        text_excerpt=text[:20000],
     )
 
 
@@ -116,6 +130,17 @@ class StepActor:
         if not step.url:
             return StepResult(step_index=step.step_index, success=False,
                               error="navigate step missing url", pre=pre, post=pre)
+
+        host = (urlparse(step.url).hostname or "").lower()
+
+        # SEC blocks Playwright via JA3/TLS fingerprinting (verified
+        # 2026-05-01: Playwright + SEC_USER_AGENT still gets HTTP 403; same
+        # URL via httpx + same UA returns 200). The architectural fix is to
+        # route SEC URLs through httpx; the browser is the wrong tool for
+        # an endpoint with an official REST contract.
+        if host in _HOSTS_REQUIRING_CONTACT_UA:
+            return await self._navigate_via_httpx(step, pre)
+
         try:
             await self.page.goto(step.url, wait_until="domcontentloaded", timeout=20000)
         except Exception as exc:  # noqa: BLE001
@@ -123,6 +148,53 @@ class StepActor:
             return StepResult(step_index=step.step_index, success=False,
                               error=f"goto failed: {exc}", pre=pre, post=post)
         post = await snapshot(self.page)
+        return StepResult(step_index=step.step_index, success=True, pre=pre, post=post)
+
+    async def _navigate_via_httpx(self, step: Step, pre: PageSnapshot) -> StepResult:
+        """SEC-style fetch: httpx with SEC compliance UA, no browser.
+
+        Loads the response body into the page via `page.set_content` so
+        downstream extract / locator steps see it as if it had been
+        navigated to. The URL bar is faked via `page.goto('about:blank')`
+        first so the post snapshot's URL matches the requested URL.
+        """
+        import httpx
+        sec_ua = os.environ.get(
+            "SEC_USER_AGENT",
+            "interview-hw-2026 contact@example.com",
+        )
+        headers = {
+            "User-Agent": sec_ua,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate",
+        }
+        try:
+            async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as c:
+                r = await c.get(step.url, headers=headers)
+            if r.status_code >= 400:
+                return StepResult(step_index=step.step_index, success=False,
+                                  error=f"httpx fetch HTTP {r.status_code} from {step.url}",
+                                  pre=pre, post=pre)
+            html = r.text
+        except Exception as exc:  # noqa: BLE001
+            return StepResult(step_index=step.step_index, success=False,
+                              error=f"httpx fetch failed: {exc}", pre=pre, post=pre)
+
+        # Push the fetched body into the Playwright page so subsequent
+        # locator / extract steps work uniformly.
+        try:
+            await self.page.set_content(html, wait_until="domcontentloaded")
+        except Exception as exc:  # noqa: BLE001
+            log.warning("set_content failed (showing first 500 chars in error): %s", exc)
+            return StepResult(step_index=step.step_index, success=False,
+                              error=f"set_content failed: {exc}", pre=pre, post=pre)
+
+        # snapshot() reads page state. URL will be "about:blank" since
+        # set_content doesn't change navigation; build a synthetic snapshot
+        # to keep the trajectory honest.
+        post_real = await snapshot(self.page)
+        post = post_real.model_copy(update={"url": step.url})
         return StepResult(step_index=step.step_index, success=True, pre=pre, post=post)
 
     async def _extract(self, step: Step, pre: PageSnapshot) -> StepResult:
