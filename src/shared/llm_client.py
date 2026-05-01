@@ -87,6 +87,12 @@ def _registry() -> dict[str, Provider]:
 
 # ── Single-call form ─────────────────────────────────────────────────────────
 
+# Default reasoning budget for Nemotron when thinking=on. Status classification
+# rarely needs more than 1-2K reasoning tokens; 16K was overkill and pushed
+# latency past 3 minutes per call. Override via NEMOTRON_REASONING_BUDGET env.
+_NEMOTRON_BUDGET_ON = int(os.environ.get("NEMOTRON_REASONING_BUDGET", "2048"))
+
+
 def _build_thinking_extra_body(style: str, on: bool) -> dict | None:
     """Translate role-level thinking flag to per-provider extra_body kwargs."""
     if style == "deepseek_chat_template":
@@ -94,12 +100,25 @@ def _build_thinking_extra_body(style: str, on: bool) -> dict | None:
     if style == "nemotron_enable_thinking":
         return {
             "chat_template_kwargs": {"enable_thinking": bool(on)},
-            "reasoning_budget": 16384 if on else 0,
+            "reasoning_budget": _NEMOTRON_BUDGET_ON if on else 0,
         }
     if style == "openai_reasoning_effort":
         # Mistral uses top-level reasoning_effort, not extra_body; handled by caller
         return None
     return None
+
+
+# Per-provider concurrency cap — NVIDIA NIM trial accounts rate-limit aggressively.
+# Each provider gets its own semaphore so a slow provider doesn't starve others.
+# Override via NIM_MAX_CONCURRENT env var.
+_MAX_CONCURRENT = int(os.environ.get("NIM_MAX_CONCURRENT", "3"))
+_provider_locks: dict[str, asyncio.Semaphore] = {}
+
+
+def _provider_lock(name: str) -> asyncio.Semaphore:
+    if name not in _provider_locks:
+        _provider_locks[name] = asyncio.Semaphore(_MAX_CONCURRENT)
+    return _provider_locks[name]
 
 
 async def _call_one(
@@ -112,27 +131,44 @@ async def _call_one(
     timeout: float,
 ) -> str:
     """Make one chat-completion call to a provider. Returns assistant text content."""
-    client = AsyncOpenAI(
-        base_url=provider.base_url,
-        api_key=provider.api_key,
-        timeout=timeout,
-    )
     extra: dict[str, Any] = {}
     eb = _build_thinking_extra_body(provider.thinking_style, thinking)
     if eb is not None:
         extra["extra_body"] = eb
     if provider.thinking_style == "openai_reasoning_effort":
-        # Mistral on NIM accepts reasoning_effort at top level via extra_body
-        extra["extra_body"] = {"reasoning_effort": "high" if thinking else "low"}
+        # Mistral on NIM accepts only 'none' or 'high' for reasoning_effort
+        # ('low' is rejected with HTTP 400). 'none' = no reasoning, fastest.
+        extra["extra_body"] = {"reasoning_effort": "high" if thinking else "none"}
 
-    r = await client.chat.completions.create(
-        model=provider.model,
-        messages=messages,  # type: ignore[arg-type]
-        max_tokens=max_tokens,
-        temperature=temperature,
-        **extra,
-    )
-    return (r.choices[0].message.content or "").strip()
+    async with _provider_lock(provider.name):
+        client = AsyncOpenAI(
+            base_url=provider.base_url,
+            api_key=provider.api_key,
+            timeout=timeout,
+        )
+        # Retry on transient 429 (rate-limit) — exponential backoff up to 3 attempts.
+        last_exc: BaseException | None = None
+        for attempt in range(3):
+            try:
+                r = await client.chat.completions.create(
+                    model=provider.model,
+                    messages=messages,  # type: ignore[arg-type]
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    **extra,
+                )
+                return (r.choices[0].message.content or "").strip()
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                msg = str(exc)
+                if "429" in msg or "Too Many Requests" in msg:
+                    backoff = 2 ** attempt  # 1s, 2s, 4s
+                    log.info("provider %s rate-limited (attempt %d), backing off %ds",
+                             provider.name, attempt + 1, backoff)
+                    await asyncio.sleep(backoff)
+                    continue
+                raise
+        raise last_exc if last_exc else RuntimeError("unreachable")
 
 
 def _role_providers(role: str) -> list[Provider]:

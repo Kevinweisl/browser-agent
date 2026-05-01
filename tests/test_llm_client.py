@@ -44,7 +44,8 @@ def test_thinking_extra_body_deepseek():
 def test_thinking_extra_body_nemotron():
     eb = _build_thinking_extra_body("nemotron_enable_thinking", on=True)
     assert eb["chat_template_kwargs"]["enable_thinking"] is True
-    assert eb["reasoning_budget"] == 16384
+    # Default is 2048; configurable via NEMOTRON_REASONING_BUDGET
+    assert eb["reasoning_budget"] >= 1024
 
 
 def test_thinking_extra_body_nemotron_off_zero_budget():

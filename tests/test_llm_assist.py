@@ -72,6 +72,13 @@ def test_should_augment_long_clean_extracted_skipped():
     assert should_augment_status("extracted", text) is None
 
 
+def test_should_augment_skips_cross_ref_toc_items():
+    """GE 2021's cross-ref TOC items have a known marker in content_text;
+    the TOC's status_hint is more authoritative than any LLM re-judgment."""
+    toc_content = "[Cross-reference TOC] Business (4, 10-18, 103-104)"
+    assert should_augment_status("extracted", toc_content) is None
+
+
 # ── _parse_status_response — robust JSON parsing ─────────────────────────────
 
 def test_parse_clean_json():
