@@ -46,7 +46,12 @@ def _extract_json_object(text: str) -> dict:
 
 async def plan_task(nl_task: str, *, max_steps: int = 25,
                     starting_url: str | None = None) -> tuple[list[Step], dict]:
-    """Returns (steps, negative_oracle_dict). `negative_oracle_dict` may be empty."""
+    """Returns (steps, negative_oracle_dict). `negative_oracle_dict` may be empty.
+
+    Retries once on JSON parse error with an explicit "fix the JSON" follow-up,
+    since reasoning-light NIM models occasionally drop a comma or misplace a
+    quote in long-form JSON output.
+    """
     user_msg = nl_task
     if starting_url:
         user_msg = f"Starting URL: {starting_url}\n\nTask: {nl_task}"
@@ -56,7 +61,22 @@ async def plan_task(nl_task: str, *, max_steps: int = 25,
     ]
     raw = await call_role("planner", messages=messages,
                           max_tokens=3000, temperature=0.2, timeout=120.0)
-    obj = _extract_json_object(raw)
+    try:
+        obj = _extract_json_object(raw)
+    except (json.JSONDecodeError, ValueError) as exc:
+        log.warning("planner JSON parse failed (%s); requesting reformat", exc)
+        repair_messages = messages + [
+            {"role": "assistant", "content": raw},
+            {"role": "user", "content": (
+                "Your previous reply was not valid JSON. Output ONLY the JSON "
+                "object — no prose, no markdown fences, no commentary. Fix any "
+                "missing commas, mis-quoted strings, or trailing text."
+            )},
+        ]
+        raw = await call_role("planner", messages=repair_messages,
+                              max_tokens=3000, temperature=0.0, timeout=120.0)
+        obj = _extract_json_object(raw)
+
     raw_steps = obj.get("steps")
     if not isinstance(raw_steps, list) or not raw_steps:
         raise ValueError(f"planner returned no steps: {obj!r}")

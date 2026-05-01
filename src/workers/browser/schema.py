@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ActionType(StrEnum):
@@ -65,6 +65,34 @@ class Step(BaseModel):
     extract_query: str | None = None  # for extract
     selector_hints: SelectorHints = Field(default_factory=SelectorHints)
     success_criteria: NegativeOracle = Field(default_factory=NegativeOracle)
+
+    @field_validator("selector_hints", mode="before")
+    @classmethod
+    def _coerce_hints(cls, v: Any) -> Any:
+        """Tolerate planner LLMs that emit a list of hint dicts: take the
+        first non-empty element; merge any remaining keys conservatively."""
+        if v is None:
+            return SelectorHints()
+        if isinstance(v, list):
+            if not v:
+                return SelectorHints()
+            merged: dict[str, Any] = {}
+            for item in v:
+                if isinstance(item, dict):
+                    for k, val in item.items():
+                        if val and k not in merged:
+                            merged[k] = val
+            return merged or SelectorHints()
+        return v
+
+    @field_validator("success_criteria", mode="before")
+    @classmethod
+    def _coerce_oracle(cls, v: Any) -> Any:
+        if v is None:
+            return NegativeOracle()
+        if isinstance(v, list):
+            return v[0] if v else NegativeOracle()
+        return v
 
 
 class PageSnapshot(BaseModel):
