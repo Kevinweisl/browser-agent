@@ -91,3 +91,23 @@ LocatorResolver; Validator (LLM K=2) judges outcomes. Saves ~80% of LLM
 calls per task. **Lesson**: if a sub-component does well-defined dispatch,
 make it deterministic; reserve LLM cycles for high-stakes strategy and
 judgment, not execution mechanics.
+
+### L11. asyncio.Semaphore is bound to its creating loop
+The eval runner re-creates an event loop per filing via `asyncio.run()`
+inside a sync wrapper. A semaphore cached at module level (single key:
+provider name) ends up bound to loop A, then crashes on loop B with
+"Semaphore is bound to a different event loop". Fix: key the cache on
+`(id(loop), name)` so each loop gets a fresh semaphore lazily. **Lesson**:
+when a process owns multiple event loops (sync→async wrappers, runner
+batches), any cached `asyncio.*` primitive needs a per-loop dimension in
+its cache key. Module-level caches are a footgun specifically here.
+
+### L12. LLM-driven validator must NOT vet passive actions
+The validator's prompt was tuned for catching silent failures on mutating
+actions (click/type). When given an EXTRACT step (which by definition
+doesn't mutate state), the validator interpreted "no_visible_state_change"
+as "step failed" and returned REPLAN, sending the agent into infinite
+re-extract loops. Fix: handlers.py short-circuits passive actions to PASS
+on `result.success=True`. **Lesson**: only call the LLM judge on the
+operation type its prompt is calibrated for; cheap deterministic shortcut
+covers the rest.

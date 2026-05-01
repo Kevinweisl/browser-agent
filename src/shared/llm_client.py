@@ -114,13 +114,20 @@ def _build_thinking_extra_body(style: str, on: bool) -> dict | None:
 # Each provider gets its own semaphore so a slow provider doesn't starve others.
 # Override via NIM_MAX_CONCURRENT env var.
 _MAX_CONCURRENT = int(os.environ.get("NIM_MAX_CONCURRENT", "3"))
-_provider_locks: dict[str, asyncio.Semaphore] = {}
+# Per-event-loop semaphore registry. asyncio.Semaphore is bound to the loop
+# that created it; a process that calls asyncio.run() multiple times (e.g.
+# the SEC eval runner extracts each filing in its own asyncio.run) needs a
+# fresh semaphore per loop or `acquire()` raises
+# "Semaphore is bound to a different event loop".
+_provider_locks: dict[tuple[int, str], asyncio.Semaphore] = {}
 
 
 def _provider_lock(name: str) -> asyncio.Semaphore:
-    if name not in _provider_locks:
-        _provider_locks[name] = asyncio.Semaphore(_MAX_CONCURRENT)
-    return _provider_locks[name]
+    loop = asyncio.get_running_loop()
+    key = (id(loop), name)
+    if key not in _provider_locks:
+        _provider_locks[key] = asyncio.Semaphore(_MAX_CONCURRENT)
+    return _provider_locks[key]
 
 
 async def _call_one(
