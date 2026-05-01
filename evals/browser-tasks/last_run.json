@@ -1,0 +1,421 @@
+{
+  "rows": [
+    {
+      "task_id": "gen-001",
+      "pack": "generic",
+      "domain": "wiki",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 3,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 48465,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nContents hide\n(Top)\nBackground\nToggle Background subsection\nSuccession crisis in England\nTostig and Hardrada's invasions\nEnglish army and Harold's preparations\nWilliam's preparations and landing\nToggle William's preparations and landing s",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Battle of Hastings Wikipedia page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Battle_of_Hastings"
+        },
+        {
+          "step": "wait_for",
+          "intent": "Casualties section heading",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Battle_of_Hastings"
+        },
+        {
+          "step": "extract",
+          "intent": "Casualties section content",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Battle_of_Hastings"
+        }
+      ]
+    },
+    {
+      "task_id": "gen-002",
+      "pack": "generic",
+      "domain": "wiki",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 27024,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nMain Page\nTalk\nRead\nView source\nView history\nTools\nAppearance hide\nText\nSmall\nStandard\nLarge\nWidth\nStandard\nWide\nColor\nAutomatic\nLight\nDark\nWelcome to Wikipedia,\nthe free encyclopedia that anyone can edit.\n273,077 active editors7,175,999 ",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Wikipedia main page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "extract",
+          "intent": "total number of articles in English Wikipedia",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        }
+      ]
+    },
+    {
+      "task_id": "gen-003",
+      "pack": "generic",
+      "domain": "docs",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 3,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 47446,
+      "extracted_excerpt": "index\nmodules |\nnext |\nprevious |\n Python \u00bb \nGreek | \u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac\nEnglish\nSpanish | espa\u00f1ol\nFrench | fran\u00e7ais\nItalian | italiano\nJapanese | \u65e5\u672c\u8a9e\nKorean | \ud55c\uad6d\uc5b4\nPolish | polski\nBrazilian Portuguese | Portugu\u00eas brasileiro\nRomanian | Rom\u00e2ne\u0219te\nTurkish | T\u00fcrk\u00e7e\nSimplified Chinese | \u7b80\u4f53\u4e2d\u6587\nTraditional Chinese | \u7e41",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "asyncio documentation homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://docs.python.org/3/library/asyncio.html"
+        },
+        {
+          "step": "wait_for",
+          "intent": "Tasks section heading",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://docs.python.org/3/library/asyncio.html"
+        },
+        {
+          "step": "extract",
+          "intent": "first sentence describing asyncio.Task",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://docs.python.org/3/library/asyncio.html"
+        }
+      ]
+    },
+    {
+      "task_id": "gen-004",
+      "pack": "generic",
+      "domain": "form",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 6912,
+      "extracted_excerpt": "Example Domain\n\nThis domain is for use in documentation examples without needing permission. Avoid use in operations.\n\nLearn more",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "example.com homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://example.com/"
+        },
+        {
+          "step": "extract",
+          "intent": "heading text and link on the page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://example.com/"
+        }
+      ]
+    },
+    {
+      "task_id": "gen-005",
+      "pack": "generic",
+      "domain": "search",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [
+        "missing must_appear: 'Vannevar Bush'"
+      ],
+      "fail_reason": "planner_failure",
+      "steps_executed": 5,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 3,
+      "duration_ms": 274545,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Wikipedia homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "click",
+          "intent": "the search input field",
+          "tier": "css_no_class",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "navigate",
+          "intent": "Wikipedia homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "click",
+          "intent": "the search button to open the search dialog",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/w/index.php?search=&title=Special%3ASearch"
+        },
+        {
+          "step": "type",
+          "intent": "the search input field",
+          "tier": "css_no_class",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/w/index.php?search=&title=Special%3ASearch"
+        }
+      ]
+    },
+    {
+      "task_id": "fin-001",
+      "pack": "finance",
+      "domain": "investor_relations",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 10224,
+      "extracted_excerpt": "Skip to main content\nApple\nStore\nMac\niPad\niPhone\nWatch\nAirPods\nTV & Home\nEntertainment\nAccessories\nSupport\n0\n+\nInvestor Relations\nStock Price\nSEC Filings\nLeadership and Governance\nOur Values\nFAQ\nContact\nNews and Results\nInvestor Updates\nFY 26 Second Quarter Results\n\nApple announced results and busin",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Apple Investor Relations homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://investor.apple.com/investor-relations/default.aspx"
+        },
+        {
+          "step": "extract",
+          "intent": "headline of the most recent investor news item",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://investor.apple.com/investor-relations/default.aspx"
+        }
+      ]
+    },
+    {
+      "task_id": "fin-002",
+      "pack": "finance",
+      "domain": "edgar",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [
+        "missing must_appear: '10-K'"
+      ],
+      "fail_reason": "validator_aborted",
+      "steps_executed": 1,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 50133,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "SEC EDGAR company filings page for CIK 0000320193",
+          "tier": null,
+          "success": true,
+          "validation": "abort",
+          "reason": "vote pick=abort confidence=1.00",
+          "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K&dateb=&owner=include&count=40"
+        }
+      ]
+    },
+    {
+      "task_id": "fin-003",
+      "pack": "finance",
+      "domain": "edgar_full_text",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [
+        "missing must_appear: 'climate'"
+      ],
+      "fail_reason": "validator_aborted",
+      "steps_executed": 1,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 31338,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "SEC EFTs search results page for climate risk 10-K filings in 2024",
+          "tier": null,
+          "success": true,
+          "validation": "abort",
+          "reason": "vote pick=abort confidence=1.00",
+          "url": "https://efts.sec.gov/LATEST/search-index?q=%22climate+risk%22&dateRange=custom&startdt=2024-01-01&enddt=2024-12-31&forms=10-K"
+        }
+      ]
+    },
+    {
+      "task_id": "fin-004",
+      "pack": "finance",
+      "domain": "news_verification",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 4,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 58934,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nContents hide\n(Top)\nHistory\nToggle History subsection\nProducts\nToggle Products subsection\nMarketing\nToggle Marketing subsection\nCorporate affairs\nToggle Corporate affairs subsection\nFinances\nToggle Finances subsection\nEnvironment\nToggle E",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Apple Inc. Wikipedia page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
+        },
+        {
+          "step": "wait_for",
+          "intent": "table of contents",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
+        },
+        {
+          "step": "click",
+          "intent": "supply chain section link",
+          "tier": null,
+          "success": false,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
+        },
+        {
+          "step": "extract",
+          "intent": "supply chain section content",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
+        }
+      ]
+    },
+    {
+      "task_id": "fin-005",
+      "pack": "finance",
+      "domain": "investor_relations",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [
+        "missing must_appear: 'Berkshire'"
+      ],
+      "fail_reason": "validator_aborted",
+      "steps_executed": 1,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 29348,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Berkshire Hathaway Investor Relations homepage",
+          "tier": null,
+          "success": false,
+          "validation": "abort",
+          "reason": "vote pick=abort confidence=1.00",
+          "url": "about:blank"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "n": 10,
+    "n_ok": 6,
+    "n_result_ok": 6,
+    "n_success_criteria_pass": 6,
+    "fail_reason_histogram": {
+      "completed": 6,
+      "planner_failure": 1,
+      "validator_aborted": 3
+    },
+    "by_pack": {
+      "generic": {
+        "n": 5,
+        "n_ok": 4,
+        "success_rate": 0.8
+      },
+      "finance": {
+        "n": 5,
+        "n_ok": 2,
+        "success_rate": 0.4
+      }
+    }
+  }
+}

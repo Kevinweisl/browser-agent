@@ -104,3 +104,40 @@ $ python scripts/browser_smoke.py    # 2nd run — cache_writes=0, cache_hits=1
 ```
 
 The Tier 1 (`CACHED`) hit on the 2nd run is the empirical demonstration of self-maintenance.
+
+## Live eval baseline (10 tasks, 2026-05-01)
+
+`evals/browser-tasks/last_run.json` after the Day 6 fixes (validator
+short-circuit on passive actions; planner JSON repair retry; selector-hints
+list coercion; max_seconds API):
+
+| Pack | Result | Notes |
+|---|---|---|
+| **generic** | 4 / 5 | gen-001 (Wikipedia article), gen-002 (Wikipedia main page), gen-003 (Python docs), gen-004 (example.com) PASS in 5-49s. gen-005 (Vannevar Bush via on-page search) failed: planner exhausted 3 replans trying to drive Wikipedia's search UI through click-then-type with no `selector_hints` from the LLM. |
+| **finance** | 2 / 5 | fin-001 (Apple IR), fin-004 (Apple Wikipedia supply chain) PASS. fin-002 / fin-003 / fin-005 (SEC EDGAR browse-edgar, EFTS full-text search, Berkshire IR) all failed at navigate with `validator_aborted` — the validator unanimously read the post-navigate page-excerpt as a block / empty-render and chose ABORT. |
+| **Total** | **6 / 10** | Architecture proven across diverse generic targets; SEC/IR anti-bot blocks are the dominant finance-pack failure mode. |
+
+### What we know about the SEC/IR failures
+
+The post-navigate text excerpts are empty or look like block pages on
+fin-002 / fin-003 / fin-005. Likely causes (not investigated this submission):
+- SEC EDGAR's `cgi-bin/browse-edgar` and `efts.sec.gov` flag headless Chromium UA
+- Berkshire IR appears to return JS-rendered content that `body.inner_text(timeout=2000)` doesn't capture before extraction
+
+Mitigations that are out of scope for this submission:
+- Residential-proxy + rotated UA headers (fin-002/003/005)
+- `wait_until="networkidle"` + page-render delay before snapshot (fin-005)
+- A `wait_for` step explicitly emitted by the planner before extract (fin-002/003)
+
+### gen-005 — exposes a real architecture limit
+
+Wikipedia's search-input is `<input id="searchInput">` inside a `<form>`
+that submits on Enter. Our Actor's `type` action calls `fill()` only — no
+implicit Enter / submit. The planner had to plan an explicit "click search
+submit" step (`#searchButton`), which it tried but the locator ladder
+returned no match because the button is named "Search" (case-insensitive
+matches our regex but `_has_one` requires exactly-one match — there are
+multiple buttons named "Search" on the page header). Three replans, each
+re-trying variations on the same dead-end, exhausted the replan budget.
+**Lesson for next iteration**: when `_has_one` rejects a 2+ count, return
+top-most or first-visible rather than failing outright.
