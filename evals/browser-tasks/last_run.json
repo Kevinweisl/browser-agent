@@ -12,12 +12,12 @@
       "steps_executed": 3,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 48465,
+      "duration_ms": 56809,
       "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nContents hide\n(Top)\nBackground\nToggle Background subsection\nSuccession crisis in England\nTostig and Hardrada's invasions\nEnglish army and Harold's preparations\nWilliam's preparations and landing\nToggle William's preparations and landing s",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "Battle of Hastings Wikipedia page",
+          "intent": "navigate to Battle of Hastings Wikipedia page",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -25,17 +25,17 @@
           "url": "https://en.wikipedia.org/wiki/Battle_of_Hastings"
         },
         {
-          "step": "wait_for",
-          "intent": "Casualties section heading",
+          "step": "click",
+          "intent": "expand the casualties section in the table of contents",
           "tier": null,
-          "success": true,
+          "success": false,
           "validation": "pass",
-          "reason": "passive action succeeded; validator short-circuit",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
           "url": "https://en.wikipedia.org/wiki/Battle_of_Hastings"
         },
         {
           "step": "extract",
-          "intent": "Casualties section content",
+          "intent": "extract death toll figures for both sides from the casualties section",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -56,12 +56,12 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 27024,
+      "duration_ms": 28879,
       "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nMain Page\nTalk\nRead\nView source\nView history\nTools\nAppearance hide\nText\nSmall\nStandard\nLarge\nWidth\nStandard\nWide\nColor\nAutomatic\nLight\nDark\nWelcome to Wikipedia,\nthe free encyclopedia that anyone can edit.\n273,077 active editors7,175,999 ",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "Wikipedia main page",
+          "intent": "Wikipedia Main Page",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -90,13 +90,13 @@
       "fail_reason": "completed",
       "steps_executed": 3,
       "selector_cache_hits": 0,
-      "selector_cache_writes": 0,
-      "duration_ms": 47446,
+      "selector_cache_writes": 1,
+      "duration_ms": 31267,
       "extracted_excerpt": "index\nmodules |\nnext |\nprevious |\n Python \u00bb \nGreek | \u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac\nEnglish\nSpanish | espa\u00f1ol\nFrench | fran\u00e7ais\nItalian | italiano\nJapanese | \u65e5\u672c\u8a9e\nKorean | \ud55c\uad6d\uc5b4\nPolish | polski\nBrazilian Portuguese | Portugu\u00eas brasileiro\nRomanian | Rom\u00e2ne\u0219te\nTurkish | T\u00fcrk\u00e7e\nSimplified Chinese | \u7b80\u4f53\u4e2d\u6587\nTraditional Chinese | \u7e41",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "asyncio documentation homepage",
+          "intent": "navigate to asyncio documentation",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -104,22 +104,22 @@
           "url": "https://docs.python.org/3/library/asyncio.html"
         },
         {
-          "step": "wait_for",
-          "intent": "Tasks section heading",
-          "tier": null,
+          "step": "click",
+          "intent": "click the Tasks section link in the table of contents",
+          "tier": "get_by_role",
           "success": true,
           "validation": "pass",
-          "reason": "passive action succeeded; validator short-circuit",
-          "url": "https://docs.python.org/3/library/asyncio.html"
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://docs.python.org/3/library/asyncio-task.html"
         },
         {
           "step": "extract",
-          "intent": "first sentence describing asyncio.Task",
+          "intent": "extract the first sentence describing what an asyncio.Task is",
           "tier": null,
           "success": true,
           "validation": "pass",
           "reason": "passive action succeeded; validator short-circuit",
-          "url": "https://docs.python.org/3/library/asyncio.html"
+          "url": "https://docs.python.org/3/library/asyncio-task.html"
         }
       ]
     },
@@ -135,12 +135,12 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 6912,
+      "duration_ms": 29861,
       "extracted_excerpt": "Example Domain\n\nThis domain is for use in documentation examples without needing permission. Avoid use in operations.\n\nLearn more",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "example.com homepage",
+          "intent": "homepage",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -162,18 +162,16 @@
       "task_id": "gen-005",
       "pack": "generic",
       "domain": "search",
-      "ok": false,
-      "result_ok": false,
-      "success_criteria_pass": false,
-      "oracle_violations": [
-        "missing must_appear: 'Vannevar Bush'"
-      ],
-      "fail_reason": "planner_failure",
-      "steps_executed": 5,
-      "selector_cache_hits": 0,
-      "selector_cache_writes": 3,
-      "duration_ms": 274545,
-      "extracted_excerpt": "",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 3,
+      "selector_cache_hits": 1,
+      "selector_cache_writes": 0,
+      "duration_ms": 136859,
+      "extracted_excerpt": "Jump to content\nMain menu\nVannevar Bush\nAmerican science official (1890\u20131974)\nVannevar Bush Award\nAmerican science and technology award\nSearch for pages containing Vannevar Bush\nSearch\nDonate\nCreate account\nLog in\nMain Page\nTalk\nRead\nView source\nView history\nTools\nAppearance hide\nText\nSmall\nStandard",
       "trajectory_summary": [
         {
           "step": "navigate",
@@ -185,40 +183,22 @@
           "url": "https://en.wikipedia.org/wiki/Main_Page"
         },
         {
-          "step": "click",
-          "intent": "the search input field",
-          "tier": "css_no_class",
-          "success": true,
-          "validation": "replan",
-          "reason": "vote pick=replan confidence=1.00",
-          "url": "https://en.wikipedia.org/wiki/Main_Page"
-        },
-        {
-          "step": "navigate",
-          "intent": "Wikipedia homepage",
-          "tier": null,
-          "success": true,
-          "validation": "pass",
-          "reason": "vote pick=pass confidence=1.00",
-          "url": "https://en.wikipedia.org/wiki/Main_Page"
-        },
-        {
-          "step": "click",
-          "intent": "the search button to open the search dialog",
-          "tier": "get_by_role",
+          "step": "type",
+          "intent": "search input field",
+          "tier": "cached",
           "success": true,
           "validation": "pass",
           "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
-          "url": "https://en.wikipedia.org/w/index.php?search=&title=Special%3ASearch"
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
         },
         {
-          "step": "type",
-          "intent": "the search input field",
-          "tier": "css_no_class",
+          "step": "extract",
+          "intent": "Vannevar Bush birth year",
+          "tier": null,
           "success": true,
-          "validation": "replan",
-          "reason": "vote pick=replan confidence=1.00",
-          "url": "https://en.wikipedia.org/w/index.php?search=&title=Special%3ASearch"
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
         }
       ]
     },
@@ -234,12 +214,12 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 10224,
+      "duration_ms": 11979,
       "extracted_excerpt": "Skip to main content\nApple\nStore\nMac\niPad\niPhone\nWatch\nAirPods\nTV & Home\nEntertainment\nAccessories\nSupport\n0\n+\nInvestor Relations\nStock Price\nSEC Filings\nLeadership and Governance\nOur Values\nFAQ\nContact\nNews and Results\nInvestor Updates\nFY 26 Second Quarter Results\n\nApple announced results and busin",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "Apple Investor Relations homepage",
+          "intent": "investor relations homepage",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -271,12 +251,12 @@
       "steps_executed": 1,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 50133,
+      "duration_ms": 46243,
       "extracted_excerpt": "",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "SEC EDGAR company filings page for CIK 0000320193",
+          "intent": "SEC EDGAR 10-K filings page for Apple Inc.",
           "tier": null,
           "success": true,
           "validation": "abort",
@@ -299,12 +279,12 @@
       "steps_executed": 1,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 31338,
+      "duration_ms": 13850,
       "extracted_excerpt": "",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "SEC EFTs search results page for climate risk 10-K filings in 2024",
+          "intent": "navigate to the SEC EDGAR search results page",
           "tier": null,
           "success": true,
           "validation": "abort",
@@ -322,15 +302,15 @@
       "success_criteria_pass": true,
       "oracle_violations": [],
       "fail_reason": "completed",
-      "steps_executed": 4,
+      "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 58934,
+      "duration_ms": 13800,
       "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nContents hide\n(Top)\nHistory\nToggle History subsection\nProducts\nToggle Products subsection\nMarketing\nToggle Marketing subsection\nCorporate affairs\nToggle Corporate affairs subsection\nFinances\nToggle Finances subsection\nEnvironment\nToggle E",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "Apple Inc. Wikipedia page",
+          "intent": "navigate to Apple Inc. Wikipedia page",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -338,26 +318,8 @@
           "url": "https://en.wikipedia.org/wiki/Apple_Inc."
         },
         {
-          "step": "wait_for",
-          "intent": "table of contents",
-          "tier": "get_by_role",
-          "success": true,
-          "validation": "pass",
-          "reason": "passive action succeeded; validator short-circuit",
-          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
-        },
-        {
-          "step": "click",
-          "intent": "supply chain section link",
-          "tier": null,
-          "success": false,
-          "validation": "pass",
-          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
-          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
-        },
-        {
           "step": "extract",
-          "intent": "supply chain section content",
+          "intent": "extract text about supply chain and manufacturing",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -380,12 +342,12 @@
       "steps_executed": 1,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 29348,
+      "duration_ms": 26338,
       "extracted_excerpt": "",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "Berkshire Hathaway Investor Relations homepage",
+          "intent": "homepage",
           "tier": null,
           "success": false,
           "validation": "abort",
@@ -397,19 +359,18 @@
   ],
   "summary": {
     "n": 10,
-    "n_ok": 6,
-    "n_result_ok": 6,
-    "n_success_criteria_pass": 6,
+    "n_ok": 7,
+    "n_result_ok": 7,
+    "n_success_criteria_pass": 7,
     "fail_reason_histogram": {
-      "completed": 6,
-      "planner_failure": 1,
+      "completed": 7,
       "validator_aborted": 3
     },
     "by_pack": {
       "generic": {
         "n": 5,
-        "n_ok": 4,
-        "success_rate": 0.8
+        "n_ok": 5,
+        "success_rate": 1.0
       },
       "finance": {
         "n": 5,

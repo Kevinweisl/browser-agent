@@ -236,17 +236,18 @@ async def _narrow(
 ) -> Locator | None:
     """Try to narrow a locator down to exactly one element via a chain.
 
-    Order (per research delta §1, Stagehand's observe-style ranking):
-      1. raw locator                       — already unambiguous, done
-      2. .filter(visible=True)             — kills off-screen / dialog twins
-      3. .filter(has_text=hints.text)      — semantic disambiguation
-      4. .filter(has_text=free_text)       — last fallback to the search text
-      5. .first()                          — explicit "give up, take top"
-                                              with a logged warning. Better than
-                                              skipping the tier (the original bug).
+    Order (per research delta §1, Stagehand's observe-style ranking, but
+    WITHOUT the `.first()` fallback after we measured it caused regressions):
+      1. raw locator             — already unambiguous, done
+      2. .filter(visible=True)   — kills off-screen / dialog twins
+      3. .filter(has_text=hints.text)
+      4. .filter(has_text=free_text)
+      Returns None when still ambiguous; ladder tries the next tier.
 
-    Returns the narrowed Locator if it resolves to exactly one element, else
-    None to let the caller try the next tier.
+    Why no `.first()`: empirically `.first()` clicked the wrong element
+    (e.g. Wikipedia TOC entry vs body header) often enough that the
+    validator REPLAN'd anyway, paying for both a bad action and a bad
+    validate. Better to fail this tier and let the planner replan.
     """
     try:
         n = await locator.count()
@@ -289,17 +290,8 @@ async def _narrow(
             n_f = 0
         if n_f == 1:
             return with_free
-        if n_f >= 1:
-            locator = with_free
+        # don't narrow further if still ambiguous — fall through to None
 
-    # Step 4: give up, take .first(). Log it — silent .first() is the
-    # original anti-pattern.
-    try:
-        final_count = await locator.count()
-    except Exception:  # noqa: BLE001
-        return None
-    if final_count == 0:
-        return None
-    log.info("locator narrowed to .first() of %d candidates "
-             "(hints=%s, free_text=%r)", final_count, hints.model_dump(), free_text)
-    return locator.first
+    log.info("locator narrowed but still ambiguous "
+             "(hints=%s, free_text=%r) — skipping tier", hints.model_dump(), free_text)
+    return None

@@ -45,8 +45,14 @@ Output JSON ONLY (no prose, no markdown fences):
 }
 
 Rules:
+- **Prefer the FEWEST steps that get the answer.** A simple navigate + extract is usually correct when the answer is on the landing page. Don't add clicks "to be thorough" — every extra click is a chance for the page to misbehave.
 - Plan ≤ {max_steps} steps. If the task can't fit, list the most-likely path and explain in a final extract step.
 - For ambiguous targets, provide multiple selector_hints (e.g. role+name AND text fallback).
 - Prefer accessible-name matching over visual cues (text fragments).
 - The final step is usually `extract` describing what the user wants returned.
 - Each must_appear / must_not_appear value is a SHORT string (≤ 80 chars) that is robust to minor wording changes.
+
+Special patterns:
+- **Search forms (e.g. Wikipedia, Google search box)**: a `type` step alone does NOT submit. Follow with EITHER (a) a `click` step on the submit button, OR (b) include `value` ending with a literal `\n` to send Enter via the input. When unsure, prefer (a).
+- **TOC / anchor links**: clicking a Table-of-Contents heading scrolls but rarely "advances the goal" from the validator's view. Skip the click and `extract` directly when the target section is already on the page.
+- **Multi-page navigation**: if step 1 already navigates to the right page, step 2 should be `extract` unless interaction is required.
