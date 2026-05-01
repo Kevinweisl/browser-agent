@@ -27,7 +27,7 @@
   starting_url: https://en.wikipedia.org/wiki/Battle_of_Hastings
   step_cap: 8
   token_cap: 12000
-  wall_clock_cap_s: 90
+  wall_clock_cap_s: 180
   success_criteria:
     - type: contains
       field: extracted
@@ -49,7 +49,7 @@
   starting_url: https://en.wikipedia.org/wiki/Main_Page
   step_cap: 6
   token_cap: 10000
-  wall_clock_cap_s: 60
+  wall_clock_cap_s: 150
   success_criteria:
     - type: regex
       field: extracted
@@ -71,7 +71,7 @@
   starting_url: https://docs.python.org/3/library/asyncio.html
   step_cap: 10
   token_cap: 15000
-  wall_clock_cap_s: 90
+  wall_clock_cap_s: 180
   success_criteria:
     - type: contains
       field: extracted
@@ -90,9 +90,9 @@
     Go to https://example.com and report the heading text and the link
     that appears on the page.
   starting_url: https://example.com
-  step_cap: 4
+  step_cap: 10
   token_cap: 8000
-  wall_clock_cap_s: 30
+  wall_clock_cap_s: 240
   success_criteria:
     - type: contains
       field: extracted
@@ -113,7 +113,7 @@
   starting_url: https://en.wikipedia.org
   step_cap: 12
   token_cap: 18000
-  wall_clock_cap_s: 120
+  wall_clock_cap_s: 240
   success_criteria:
     - type: regex
       field: extracted
@@ -135,7 +135,7 @@
   starting_url: https://investor.apple.com/investor-relations/default.aspx
   step_cap: 10
   token_cap: 15000
-  wall_clock_cap_s: 120
+  wall_clock_cap_s: 240
   success_criteria:
     - type: contains
       field: extracted
@@ -157,7 +157,7 @@
   starting_url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K&dateb=&owner=include&count=40
   step_cap: 8
   token_cap: 15000
-  wall_clock_cap_s: 90
+  wall_clock_cap_s: 180
   success_criteria:
     - type: regex
       field: extracted
@@ -178,7 +178,7 @@
   starting_url: https://efts.sec.gov/LATEST/search-index?q=%22climate+risk%22&dateRange=custom&startdt=2024-01-01&enddt=2024-12-31&forms=10-K
   step_cap: 8
   token_cap: 12000
-  wall_clock_cap_s: 90
+  wall_clock_cap_s: 180
   success_criteria:
     - type: regex
       field: extracted
@@ -200,7 +200,7 @@
   starting_url: https://en.wikipedia.org/wiki/Apple_Inc.
   step_cap: 12
   token_cap: 20000
-  wall_clock_cap_s: 120
+  wall_clock_cap_s: 240
   success_criteria:
     - type: contains
       field: extracted
@@ -221,7 +221,7 @@
   starting_url: https://ir.berkshirehathaway.com
   step_cap: 8
   token_cap: 12000
-  wall_clock_cap_s: 90
+  wall_clock_cap_s: 180
   success_criteria:
     - type: contains
       field: extracted

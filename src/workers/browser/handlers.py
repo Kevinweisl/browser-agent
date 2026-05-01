@@ -17,8 +17,10 @@ from .actor import StepActor
 from .locator_ladder import LocatorResolver
 from .planner import plan_task, replan
 from .schema import (
+    ActionType,
     PageSnapshot,
     StepResult,
+    StepValidation,
     TaskInput,
     TaskResult,
     TrajectoryEvent,
@@ -26,6 +28,11 @@ from .schema import (
 )
 from .silent_failure import collect_signals, negative_oracle_violations
 from .validator import validate_step
+
+# Action types where the cheap signals + step.success alone are sufficient —
+# no LLM validator call needed. Saves ~5s × K voters per step on tasks with
+# many extracts/screenshots.
+_PASSIVE_ACTIONS = {ActionType.EXTRACT, ActionType.SCREENSHOT, ActionType.WAIT_FOR}
 
 log = logging.getLogger(__name__)
 
@@ -70,7 +77,7 @@ async def _validate_negative_oracle(post: PageSnapshot, oracle: dict) -> list[st
 
 async def run_task(task_input: TaskInput) -> TaskResult:
     t0 = time.perf_counter()
-    deadline_s = task_input.max_minutes * 60
+    deadline_s = task_input.max_seconds
     trajectory: list[TrajectoryEvent] = []
     fail_reason = "completed"
 
@@ -127,18 +134,30 @@ async def run_task(task_input: TaskInput) -> TaskResult:
                 signals = collect_signals(step, result.pre, result.post)
                 oracle_violations = negative_oracle_violations(step, result.post)
 
-            # LLM trajectory verifier — only when cheap signals say "no change"
-            # on a mutating action OR when there's an oracle violation.
-            try:
-                validation = await validate_step(step, result, signals, oracle_violations)
-            except Exception as exc:
-                log.exception("validator crashed step=%s", step.step_index)
-                from .schema import StepValidation
+            # Validator dispatch:
+            #  - Passive actions (extract / screenshot / wait_for): cheap-signal
+            #    only; no LLM call. Pass on result.success; per-step
+            #    success_criteria is too strict for passive ops, the global
+            #    negative_oracle on the final page is the right check.
+            #  - Mutating actions: LLM K=N vote on top of cheap signals.
+            if step.action_type in _PASSIVE_ACTIONS:
                 validation = StepValidation(
                     decision=ValidatorDecision.PASS if result.success else ValidatorDecision.REPLAN,
-                    reason=f"validator-crash; defaulted on result.success={result.success}: {exc}",
-                    silent_failure_signals=signals, confidence=0.0,
+                    reason=("passive action succeeded; validator short-circuit"
+                            if result.success
+                            else f"passive action error: {result.error}"),
+                    silent_failure_signals=signals, confidence=1.0,
                 )
+            else:
+                try:
+                    validation = await validate_step(step, result, signals, oracle_violations)
+                except Exception as exc:
+                    log.exception("validator crashed step=%s", step.step_index)
+                    validation = StepValidation(
+                        decision=ValidatorDecision.PASS if result.success else ValidatorDecision.REPLAN,
+                        reason=f"validator-crash; defaulted on result.success={result.success}: {exc}",
+                        silent_failure_signals=signals, confidence=0.0,
+                    )
 
             trajectory.append(TrajectoryEvent(step=step, result=result, validation=validation))
             steps_executed += 1

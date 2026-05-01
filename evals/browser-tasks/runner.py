@@ -67,7 +67,7 @@ async def run_one(task: dict) -> dict:
         task=task["nl_description"],
         starting_url=task.get("starting_url"),
         max_steps=task.get("step_cap", 25),
-        max_minutes=int(task.get("wall_clock_cap_s", 180) / 60) or 1,
+        max_seconds=task.get("wall_clock_cap_s", 180),
     )
     try:
         result = await run_task(task_input)
@@ -98,6 +98,19 @@ async def run_one(task: dict) -> dict:
     )
     oracle_viols = _oracle_violations(last_post_text, task.get("negative_oracle", {}))
 
+    trajectory_summary = [
+        {
+            "step": e.step.action_type.value,
+            "intent": e.step.target_intent,
+            "tier": (e.result.locator_tier.value if e.result.locator_tier else None),
+            "success": e.result.success,
+            "validation": e.validation.decision.value,
+            "reason": e.validation.reason,
+            "url": (e.result.post.url if e.result.post else None),
+        }
+        for e in result.trajectory
+    ]
+
     return {
         "task_id": task["task_id"],
         "pack": task.get("pack"),
@@ -112,6 +125,7 @@ async def run_one(task: dict) -> dict:
         "selector_cache_writes": result.selector_cache_writes,
         "duration_ms": result.duration_ms,
         "extracted_excerpt": extracted_text[:300],
+        "trajectory_summary": trajectory_summary,
     }
 
 

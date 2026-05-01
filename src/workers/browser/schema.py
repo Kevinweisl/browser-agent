@@ -111,7 +111,7 @@ class TaskInput(BaseModel):
     task: str
     secrets: dict[str, str] = Field(default_factory=dict)
     max_steps: int = 25
-    max_minutes: int = 5
+    max_seconds: int = 300  # wall-clock cap; honored by handlers.run_task loop
     starting_url: str | None = None  # if omitted, planner emits a navigate step
 
 
