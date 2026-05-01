@@ -111,3 +111,38 @@ re-extract loops. Fix: handlers.py short-circuits passive actions to PASS
 on `result.success=True`. **Lesson**: only call the LLM judge on the
 operation type its prompt is calibrated for; cheap deterministic shortcut
 covers the rest.
+
+---
+
+## 2026-05-01 — Day 6 second iteration (browser eval 6/10 → 10/10)
+
+### L13. K=2 unanimous-only beats K=3 majority for validator role
+Empirically measured on browser eval: K=2 (Nemotron + Mistral, both must
+agree on REPLAN) achieves 10/10. Adding Qwen as 3rd validator with 2/3
+threshold dropped to 4/10 — the third vote correlated enough with one of
+the others that K=3 over-replans on borderline anchor clicks. **Lesson**:
+more LLMs is not strictly better. For PASS/FAIL judgment with high false-
+positive cost, K=2 unanimous (any single REPLAN → consensus REPLAN) gates
+better than K=3 majority. Save K=3 for tasks where the third opinion breaks
+ties (trigger eval, extractor aug).
+
+### L14. Recognize when the browser is the wrong primitive
+SEC EDGAR (`sec.gov`, `data.sec.gov`, `efts.sec.gov`) blocks Playwright via
+JA3/TLS fingerprinting **regardless** of the User-Agent header — the same
+UA in `httpx` works fine because it negotiates a different TLS handshake.
+Fix: detect SEC hosts in `actor._navigate`, fetch via httpx, then
+`page.set_content()` the HTML so locator + extract see a uniform Playwright
+Page. **Lesson**: "self-correcting agent" includes recognizing when your
+fundamental tool is wrong for the host. Don't burn budget proxying around a
+fingerprint when the official REST contract works.
+
+### L15. Iterate-to-perfect needs measurement after every change
+Browser eval went 6/10 → 4/10 → 3/10 → 7/10 → 7/10 → 9/10 → **10/10** over
+7 commits. Each commit had a single logical change AND a measured delta vs
+the prior run. The 4/10 and 3/10 dips were what surfaced L13 (K=2 over K=3)
+and the `.first()` regression — without measuring the regression, we'd have
+shipped the wrong fix. **Lesson**: when the user asks for "improve until
+perfect", commit per-iteration with the eval delta in the commit message;
+regressions are how you find the next lesson. Web-research the failure
+modes first (per `feedback_iterate_to_perfect`); don't invent fixes from
+first principles.

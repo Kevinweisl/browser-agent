@@ -12,7 +12,7 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 26228,
+      "duration_ms": 73555,
       "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nContents hide\n(Top)\nBackground\nToggle Background subsection\nSuccession crisis in England\nTostig and Hardrada's invasions\nEnglish army and Harold's preparations\nWilliam's preparations and landing\nToggle William's preparations and landing s",
       "trajectory_summary": [
         {
@@ -47,8 +47,8 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 23650,
-      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nMain Page\nTalk\nRead\nView source\nView history\nTools\nAppearance hide\nText\nSmall\nStandard\nLarge\nWidth\nStandard\nWide\nColor\nAutomatic\nLight\nDark\nWelcome to Wikipedia,\nthe free encyclopedia that anyone can edit.\n273,077 active editors7,175,999 ",
+      "duration_ms": 10076,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nMain Page\nTalk\nRead\nView source\nView history\nTools\nAppearance hide\nText\nSmall\nStandard\nLarge\nWidth\nStandard\nWide\nColor\nAutomatic\nLight\nDark\nWelcome to Wikipedia,\nthe free encyclopedia that anyone can edit.\n272,589 active editors7,176,068 ",
       "trajectory_summary": [
         {
           "step": "navigate",
@@ -79,10 +79,10 @@
       "success_criteria_pass": true,
       "oracle_violations": [],
       "fail_reason": "completed",
-      "steps_executed": 2,
-      "selector_cache_hits": 0,
+      "steps_executed": 3,
+      "selector_cache_hits": 1,
       "selector_cache_writes": 0,
-      "duration_ms": 24890,
+      "duration_ms": 30685,
       "extracted_excerpt": "index\nmodules |\nnext |\nprevious |\n Python \u00bb \nGreek | \u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac\nEnglish\nSpanish | espa\u00f1ol\nFrench | fran\u00e7ais\nItalian | italiano\nJapanese | \u65e5\u672c\u8a9e\nKorean | \ud55c\uad6d\uc5b4\nPolish | polski\nBrazilian Portuguese | Portugu\u00eas brasileiro\nRomanian | Rom\u00e2ne\u0219te\nTurkish | T\u00fcrk\u00e7e\nSimplified Chinese | \u7b80\u4f53\u4e2d\u6587\nTraditional Chinese | \u7e41",
       "trajectory_summary": [
         {
@@ -95,13 +95,22 @@
           "url": "https://docs.python.org/3/library/asyncio.html"
         },
         {
+          "step": "click",
+          "intent": "click the Tasks section link in the table of contents",
+          "tier": "cached",
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://docs.python.org/3/library/asyncio-task.html"
+        },
+        {
           "step": "extract",
           "intent": "extract the first sentence describing an asyncio.Task",
           "tier": null,
           "success": true,
           "validation": "pass",
           "reason": "passive action succeeded; validator short-circuit",
-          "url": "https://docs.python.org/3/library/asyncio.html"
+          "url": "https://docs.python.org/3/library/asyncio-task.html"
         }
       ]
     },
@@ -117,12 +126,12 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 18581,
+      "duration_ms": 38296,
       "extracted_excerpt": "Example Domain\n\nThis domain is for use in documentation examples without needing permission. Avoid use in operations.\n\nLearn more",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "navigate to example.com homepage",
+          "intent": "homepage",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -131,7 +140,7 @@
         },
         {
           "step": "extract",
-          "intent": "extract heading text and link text",
+          "intent": "heading text and link",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -149,10 +158,10 @@
       "success_criteria_pass": true,
       "oracle_violations": [],
       "fail_reason": "completed",
-      "steps_executed": 6,
-      "selector_cache_hits": 0,
-      "selector_cache_writes": 3,
-      "duration_ms": 116193,
+      "steps_executed": 5,
+      "selector_cache_hits": 1,
+      "selector_cache_writes": 1,
+      "duration_ms": 154119,
       "extracted_excerpt": "Jump to content\nMain menu\nVannevar Bush\nAmerican science official (1890\u20131974)\nVannevar Bush Award\nAmerican science and technology award\nSearch for pages containing Vannevar Bush\nSearch\nDonate\nCreate account\nLog in\nMain Page\nTalk\nRead\nView source\nView history\nTools\nAppearance hide\nText\nSmall\nStandard",
       "trajectory_summary": [
         {
@@ -167,16 +176,7 @@
         {
           "step": "type",
           "intent": "search input field",
-          "tier": "get_by_label",
-          "success": true,
-          "validation": "replan",
-          "reason": "vote pick=replan confidence=1.00",
-          "url": "https://en.wikipedia.org/wiki/Main_Page"
-        },
-        {
-          "step": "type",
-          "intent": "search input field",
-          "tier": "get_by_label",
+          "tier": "cached",
           "success": true,
           "validation": "replan",
           "reason": "vote pick=replan confidence=1.00",
@@ -202,7 +202,7 @@
         },
         {
           "step": "extract",
-          "intent": "birth year from infobox",
+          "intent": "extract birth year",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -223,7 +223,7 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 7350,
+      "duration_ms": 37971,
       "extracted_excerpt": "Skip to main content\nApple\nStore\nMac\niPad\niPhone\nWatch\nAirPods\nTV & Home\nEntertainment\nAccessories\nSupport\n0\n+\nInvestor Relations\nStock Price\nSEC Filings\nLeadership and Governance\nOur Values\nFAQ\nContact\nNews and Results\nInvestor Updates\nFY 26 Second Quarter Results\n\nApple announced results and busin",
       "trajectory_summary": [
         {
@@ -258,12 +258,12 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 62203,
+      "duration_ms": 52888,
       "extracted_excerpt": "SEC.gov\nEDGAR\nLatest Filings\nFilings search tools\nEDGAR Company Search Results\nSEC Home \u00bb\nCompany Search \u00bb\nCurrent Page\nMailing Address ONE APPLE PARK WAY CUPERTINO CA 95014\nBusiness Address ONE APPLE PARK WAY CUPERTINO CA 95014 (408) 996-1010\nApple Inc. CIK#: 0000320193 (see all company filings)\n\nS",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "SEC EDGAR 10-K filings page for Apple Inc.",
+          "intent": "navigate to SEC EDGAR 10-K filings for Apple Inc.",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -272,7 +272,7 @@
         },
         {
           "step": "extract",
-          "intent": "accession number of the most recent 10-K filing",
+          "intent": "extract the accession number of the most recent 10-K filing",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -293,12 +293,12 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 15579,
-      "extracted_excerpt": "{\"took\":908,\"timed_out\":false,\"_shards\":{\"total\":50,\"successful\":50,\"skipped\":0,\"failed\":0},\"hits\":{\"total\":{\"value\":315,\"relation\":\"eq\"},\"max_score\":7.690241,\"hits\":[{\"_index\":\"edgar_file\",\"_id\":\"0000815097-24-000011:ccl-20231130.htm\",\"_score\":7.690241,\"_source\":{\"ciks\":[\"0000815097\",\"0001125259\"],",
+      "duration_ms": 10975,
+      "extracted_excerpt": "{\"took\":814,\"timed_out\":false,\"_shards\":{\"total\":50,\"successful\":50,\"skipped\":0,\"failed\":0},\"hits\":{\"total\":{\"value\":315,\"relation\":\"eq\"},\"max_score\":7.695653,\"hits\":[{\"_index\":\"edgar_file\",\"_id\":\"0000815097-24-000011:ccl-20231130.htm\",\"_score\":7.695653,\"_source\":{\"ciks\":[\"0000815097\",\"0001125259\"],",
       "trajectory_summary": [
         {
           "step": "navigate",
-          "intent": "navigate to the search results page",
+          "intent": "navigate to the SEC EDGAR search results page",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -328,7 +328,7 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 31728,
+      "duration_ms": 10289,
       "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\nContents hide\n(Top)\nHistory\nToggle History subsection\nProducts\nToggle Products subsection\nMarketing\nToggle Marketing subsection\nCorporate affairs\nToggle Corporate affairs subsection\nFinances\nToggle Finances subsection\nEnvironment\nToggle E",
       "trajectory_summary": [
         {
@@ -342,7 +342,7 @@
         },
         {
           "step": "extract",
-          "intent": "extract text about Apple's supplier network and country dependencies",
+          "intent": "extract text about supply chain and manufacturing",
           "tier": null,
           "success": true,
           "validation": "pass",
@@ -363,7 +363,7 @@
       "steps_executed": 2,
       "selector_cache_hits": 0,
       "selector_cache_writes": 0,
-      "duration_ms": 5569,
+      "duration_ms": 9171,
       "extracted_excerpt": "BERKSHIRE HATHAWAY INC.\n3555 Farnam Street\nOmaha, NE 68131\nOfficial Home Page\u00a0\n\nA Message from Warren E. Buffett\n\t\nFraudulent Claims Regarding Mr. Buffett's Endorsements of Investment Products and Political Candidates\n\n\nAnnual & Interim Reports\nUpdated February 28, 2026\n\n\t\nNews Releases from Berkshi",
       "trajectory_summary": [
         {

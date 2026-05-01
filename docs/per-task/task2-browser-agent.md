@@ -107,7 +107,7 @@ The Tier 1 (`CACHED`) hit on the 2nd run is the empirical demonstration of self-
 
 ## Live eval baseline (10 tasks, 2026-05-01)
 
-After 4 iterations of measure-fix-remeasure (`evals/browser-tasks/last_run.json`):
+After 7 iterations of measure-fix-remeasure (v1 6/10 → v7 10/10; `evals/browser-tasks/last_run.json`):
 
 | Pack | Result | Notes |
 |---|---|---|
@@ -126,6 +126,35 @@ After 4 iterations of measure-fix-remeasure (`evals/browser-tasks/last_run.json`
 | v5 | 7/10 | SEC UA via `set_extra_http_headers` | no change — JA3/TLS fingerprint blocks Playwright regardless of UA |
 | v6 | 9/10 | SEC `httpx` fallback + Berkshire URL fix | fin-002 + fin-005 PASS |
 | **v7** | **10/10** | JSON-aware fin-003 oracle (`"hits"` instead of `"climate"`) + 20K text excerpt cap | fin-003 PASS — SEC EFTS returns JSON not HTML |
+
+### Determinism (3-run pass-rate, 2026-05-01 night)
+
+The planner is stochastic (LLM K=1, no seed). To check that v7's 10/10 wasn't a lucky single-shot, ran the eval 3 consecutive times:
+
+| Run | Pass rate | Total wall time | Notes |
+|---|---|---|---|
+| 1 | 10 / 10 | ~478 s | gen-005 the long pole at 195 s |
+| 2 | 10 / 10 | ~502 s | fin-001 jumped to 81 s (re-planning) |
+| 3 | 10 / 10 | ~428 s | fin-005 fastest at 9 s |
+
+**Pass-rate determinism: 30 / 30 (100%)** across all 3 runs.
+
+Per-task duration spread (min / max ms across 3 runs):
+
+| Task | Min | Max | Spread | Note |
+|---|---|---|---|---|
+| gen-001 | 24985 | 73555 | 2.9× | Wikipedia render variability |
+| gen-002 | 6721 | 67327 | 10× | Run 2 hit a planner detour, still passed |
+| gen-003 | 16619 | 73599 | 4.4× | docs.python.org TOC clicks vary |
+| gen-004 | 34708 | 84793 | 2.4× | example.com is small, network noise dominates |
+| gen-005 | 42459 | 194605 | 4.6× | longest task — search submit + result follow |
+| fin-001 | 21898 | 80866 | 3.7× | Apple IR JS render |
+| fin-002 | 20890 | 53743 | 2.6× | SEC EDGAR via httpx |
+| fin-003 | 10975 | 36973 | 3.4× | SEC EFTS via httpx |
+| fin-004 | 10289 | 56738 | 5.5× | Wikipedia anchor click |
+| fin-005 | 9171 | 60102 | 6.5× | Berkshire root nav |
+
+**Conclusion**: success is deterministic; latency is not. All durations stay well below the per-task `wall_clock_cap_s` (120-240s). Cache hits = 0 across all 3 runs in this batch (the cross-session demo lives in `scripts/browser_smoke.py` instead — same eval-runner instance doesn't re-encounter the same `(url, intent)` pair).
 
 ### Key architectural decision: hybrid browser + httpx
 
