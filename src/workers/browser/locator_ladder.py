@@ -122,8 +122,9 @@ class LocatorResolver:
         # Tier 1: cached selector (only if dom_hash matched)
         if cached_selector and cache_dom_match:
             loc = self._materialize_serialized(page, cached_selector)
-            if loc is not None and await _has_one(loc):
-                return Resolution(LocatorTier.CACHED, cached_selector, loc, True)
+            narrowed = await _narrow(loc, hints) if loc is not None else None
+            if narrowed is not None:
+                return Resolution(LocatorTier.CACHED, cached_selector, narrowed, True)
 
         # Tier 2: getByRole
         role = hints.role or infer_role(intent)
@@ -133,37 +134,42 @@ class LocatorResolver:
             if name:
                 kwargs["name"] = re.compile(re.escape(name), re.IGNORECASE)
             loc = page.get_by_role(role, **kwargs)
-            if await _has_one(loc):
+            narrowed = await _narrow(loc, hints, free_text=name)
+            if narrowed is not None:
                 serialized = f"role={role}" + (f"[name~={name!r}]" if name else "")
-                return Resolution(LocatorTier.GET_BY_ROLE, serialized, loc)
+                return Resolution(LocatorTier.GET_BY_ROLE, serialized, narrowed)
 
         # Tier 3: getByLabel
         label = hints.label
         if label:
             loc = page.get_by_label(label)
-            if await _has_one(loc):
-                return Resolution(LocatorTier.GET_BY_LABEL, f"label={label!r}", loc)
+            narrowed = await _narrow(loc, hints, free_text=label)
+            if narrowed is not None:
+                return Resolution(LocatorTier.GET_BY_LABEL, f"label={label!r}", narrowed)
 
         # Tier 4: getByTestId
         test_id = hints.test_id
         if test_id:
             loc = page.get_by_test_id(test_id)
-            if await _has_one(loc):
-                return Resolution(LocatorTier.GET_BY_TEST_ID, f"testid={test_id}", loc)
+            narrowed = await _narrow(loc, hints)
+            if narrowed is not None:
+                return Resolution(LocatorTier.GET_BY_TEST_ID, f"testid={test_id}", narrowed)
 
         # Tier 5: getByText
         text = hints.text or name
         if text:
             loc = page.get_by_text(text, exact=False)
-            if await _has_one(loc):
-                return Resolution(LocatorTier.GET_BY_TEXT, f"text={text!r}", loc)
+            narrowed = await _narrow(loc, hints, free_text=text)
+            if narrowed is not None:
+                return Resolution(LocatorTier.GET_BY_TEXT, f"text={text!r}", narrowed)
 
         # Tier 6: CSS without class (id/data-* only)
         css = hints.css
         if css and _is_safe_css(css):
             loc = page.locator(css)
-            if await _has_one(loc):
-                return Resolution(LocatorTier.CSS_NO_CLASS, f"css={css}", loc)
+            narrowed = await _narrow(loc, hints)
+            if narrowed is not None:
+                return Resolution(LocatorTier.CSS_NO_CLASS, f"css={css}", narrowed)
 
         # Tier 7: vision fallback (stubbed)
         if self.vision_fallback is not None:
@@ -220,3 +226,80 @@ async def _has_one(locator: Locator) -> bool:
     except Exception:  # noqa: BLE001
         return False
     return n == 1
+
+
+async def _narrow(
+    locator: Locator,
+    hints: SelectorHints,
+    *,
+    free_text: str | None = None,
+) -> Locator | None:
+    """Try to narrow a locator down to exactly one element via a chain.
+
+    Order (per research delta §1, Stagehand's observe-style ranking):
+      1. raw locator                       — already unambiguous, done
+      2. .filter(visible=True)             — kills off-screen / dialog twins
+      3. .filter(has_text=hints.text)      — semantic disambiguation
+      4. .filter(has_text=free_text)       — last fallback to the search text
+      5. .first()                          — explicit "give up, take top"
+                                              with a logged warning. Better than
+                                              skipping the tier (the original bug).
+
+    Returns the narrowed Locator if it resolves to exactly one element, else
+    None to let the caller try the next tier.
+    """
+    try:
+        n = await locator.count()
+    except Exception:  # noqa: BLE001
+        return None
+    if n == 0:
+        return None
+    if n == 1:
+        return locator
+
+    # Step 1: visible only
+    try:
+        visible = locator.filter(visible=True)
+        n_v = await visible.count()
+    except Exception:  # noqa: BLE001
+        n_v = 0
+    if n_v == 1:
+        return visible
+    if n_v >= 1:
+        locator = visible  # keep narrowing from here
+
+    # Step 2: filter by hint text
+    if hints.text:
+        try:
+            with_text = locator.filter(has_text=hints.text)
+            n_t = await with_text.count()
+        except Exception:  # noqa: BLE001
+            n_t = 0
+        if n_t == 1:
+            return with_text
+        if n_t >= 1:
+            locator = with_text
+
+    # Step 3: filter by free_text (the inferred name from intent)
+    if free_text and (not hints.text or free_text != hints.text):
+        try:
+            with_free = locator.filter(has_text=free_text)
+            n_f = await with_free.count()
+        except Exception:  # noqa: BLE001
+            n_f = 0
+        if n_f == 1:
+            return with_free
+        if n_f >= 1:
+            locator = with_free
+
+    # Step 4: give up, take .first(). Log it — silent .first() is the
+    # original anti-pattern.
+    try:
+        final_count = await locator.count()
+    except Exception:  # noqa: BLE001
+        return None
+    if final_count == 0:
+        return None
+    log.info("locator narrowed to .first() of %d candidates "
+             "(hints=%s, free_text=%r)", final_count, hints.model_dump(), free_text)
+    return locator.first

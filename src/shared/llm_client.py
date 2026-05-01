@@ -80,6 +80,8 @@ def _registry() -> dict[str, Provider]:
         ("deepseek", "deepseek_chat_template"),
         ("nemotron", "nemotron_enable_thinking"),
         ("mistral",  "openai_reasoning_effort"),
+        ("qwen",     "enable_thinking_simple"),
+        ("gemma",    "enable_thinking_simple"),
     ]:
         p = _provider_from_env(name, style)
         if p:
@@ -104,6 +106,9 @@ def _build_thinking_extra_body(style: str, on: bool) -> dict | None:
             "chat_template_kwargs": {"enable_thinking": bool(on)},
             "reasoning_budget": _NEMOTRON_BUDGET_ON if on else 0,
         }
+    if style == "enable_thinking_simple":
+        # Qwen / Gemma — chat_template_kwargs.enable_thinking only, no budget knob.
+        return {"chat_template_kwargs": {"enable_thinking": bool(on)}}
     if style == "openai_reasoning_effort":
         # Mistral uses top-level reasoning_effort, not extra_body; handled by caller
         return None
@@ -119,15 +124,27 @@ _MAX_CONCURRENT = int(os.environ.get("NIM_MAX_CONCURRENT", "3"))
 # the SEC eval runner extracts each filing in its own asyncio.run) needs a
 # fresh semaphore per loop or `acquire()` raises
 # "Semaphore is bound to a different event loop".
-_provider_locks: dict[tuple[int, str], asyncio.Semaphore] = {}
+#
+# Using WeakKeyDictionary keyed on the loop object itself (not its id):
+# when the loop is garbage-collected, the entry vanishes — no risk of an
+# id() being recycled and the cache returning a semaphore bound to a dead
+# loop. Recommended pattern in 2026-05-01-failure-mode-fixes.md §4.
+import weakref
+
+_provider_locks: weakref.WeakKeyDictionary[
+    asyncio.AbstractEventLoop, dict[str, asyncio.Semaphore]
+] = weakref.WeakKeyDictionary()
 
 
 def _provider_lock(name: str) -> asyncio.Semaphore:
     loop = asyncio.get_running_loop()
-    key = (id(loop), name)
-    if key not in _provider_locks:
-        _provider_locks[key] = asyncio.Semaphore(_MAX_CONCURRENT)
-    return _provider_locks[key]
+    per_loop = _provider_locks.get(loop)
+    if per_loop is None:
+        per_loop = {}
+        _provider_locks[loop] = per_loop
+    if name not in per_loop:
+        per_loop[name] = asyncio.Semaphore(_MAX_CONCURRENT)
+    return per_loop[name]
 
 
 async def _call_one(
