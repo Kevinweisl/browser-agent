@@ -1,0 +1,233 @@
+# Task 2 browser-agent eval set.
+#
+# Two packs:
+#   - generic    — public sites, no auth, demonstrate cross-domain coverage
+#   - finance    — investor-relations / public filings, the integration narrative
+#
+# Constraints per task:
+#   step_cap        — hard cap on total Actor steps (across initial plan + replans)
+#   token_cap       — soft cap, tracked but not enforced (informational)
+#   wall_clock_cap_s
+#   success_criteria — list of {type: contains|regex, field: text|extracted, value: ...}
+#   negative_oracle  — must_appear_on_final_page + must_not_appear (substring match)
+#
+# Methodology adapted from research delta §6: negative oracle pass rate is the
+# primary cheap signal; ariaSnapshot match is the secondary; LLM-judge is the
+# tiebreak for ambiguous results.
+
+# ─── generic pack ────────────────────────────────────────────────────────────
+- task_id: gen-001
+  pack: generic
+  domain: wiki
+  difficulty: easy
+  nl_description: |
+    Go to https://en.wikipedia.org/wiki/Battle_of_Hastings and find the
+    casualties section. Return a one-line answer with the rough death toll
+    figures listed for both sides.
+  starting_url: https://en.wikipedia.org/wiki/Battle_of_Hastings
+  step_cap: 8
+  token_cap: 12000
+  wall_clock_cap_s: 90
+  success_criteria:
+    - type: contains
+      field: extracted
+      value: "Hastings"
+  negative_oracle:
+    must_appear_on_final_page:
+      - "Battle of Hastings"
+    must_not_appear:
+      - "Wikipedia does not have an article"
+
+- task_id: gen-002
+  pack: generic
+  domain: wiki
+  difficulty: easy
+  nl_description: |
+    Go to https://en.wikipedia.org/wiki/Main_Page and report the total
+    number of articles in English Wikipedia (the figure shown on the Main
+    Page).
+  starting_url: https://en.wikipedia.org/wiki/Main_Page
+  step_cap: 6
+  token_cap: 10000
+  wall_clock_cap_s: 60
+  success_criteria:
+    - type: regex
+      field: extracted
+      value: '\d{1,3}([,]\d{3})+'
+  negative_oracle:
+    must_appear_on_final_page:
+      - "Main Page"
+    must_not_appear:
+      - "page not found"
+
+- task_id: gen-003
+  pack: generic
+  domain: docs
+  difficulty: medium
+  nl_description: |
+    Go to https://docs.python.org/3/library/asyncio.html and find the
+    section about Tasks. Extract the first sentence describing what an
+    asyncio.Task is.
+  starting_url: https://docs.python.org/3/library/asyncio.html
+  step_cap: 10
+  token_cap: 15000
+  wall_clock_cap_s: 90
+  success_criteria:
+    - type: contains
+      field: extracted
+      value: "Task"
+  negative_oracle:
+    must_appear_on_final_page:
+      - "asyncio"
+    must_not_appear:
+      - "404"
+
+- task_id: gen-004
+  pack: generic
+  domain: form
+  difficulty: medium
+  nl_description: |
+    Go to https://example.com and report the heading text and the link
+    that appears on the page.
+  starting_url: https://example.com
+  step_cap: 4
+  token_cap: 8000
+  wall_clock_cap_s: 30
+  success_criteria:
+    - type: contains
+      field: extracted
+      value: "Example Domain"
+  negative_oracle:
+    must_appear_on_final_page:
+      - "Example Domain"
+    must_not_appear:
+      - "page not found"
+
+- task_id: gen-005
+  pack: generic
+  domain: search
+  difficulty: medium
+  nl_description: |
+    Go to https://en.wikipedia.org and use the search to look up
+    "Vannevar Bush". Return the year he was born from the article.
+  starting_url: https://en.wikipedia.org
+  step_cap: 12
+  token_cap: 18000
+  wall_clock_cap_s: 120
+  success_criteria:
+    - type: regex
+      field: extracted
+      value: '189\d'
+  negative_oracle:
+    must_appear_on_final_page:
+      - "Vannevar Bush"
+    must_not_appear:
+      - "no results"
+
+# ─── finance pack ────────────────────────────────────────────────────────────
+- task_id: fin-001
+  pack: finance
+  domain: investor_relations
+  difficulty: medium
+  nl_description: |
+    Go to https://investor.apple.com/investor-relations/default.aspx and
+    extract the headline from the most recent investor news item.
+  starting_url: https://investor.apple.com/investor-relations/default.aspx
+  step_cap: 10
+  token_cap: 15000
+  wall_clock_cap_s: 120
+  success_criteria:
+    - type: contains
+      field: extracted
+      value: "Apple"
+  negative_oracle:
+    must_appear_on_final_page:
+      - "Apple"
+    must_not_appear:
+      - "page not found"
+      - "Access Denied"
+
+- task_id: fin-002
+  pack: finance
+  domain: edgar
+  difficulty: medium
+  nl_description: |
+    Go to https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K&dateb=&owner=include&count=40 and report the
+    accession number of the most recent 10-K filing.
+  starting_url: https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K&dateb=&owner=include&count=40
+  step_cap: 8
+  token_cap: 15000
+  wall_clock_cap_s: 90
+  success_criteria:
+    - type: regex
+      field: extracted
+      value: '\d{10}-\d{2}-\d{6}'
+  negative_oracle:
+    must_appear_on_final_page:
+      - "10-K"
+    must_not_appear:
+      - "no matching"
+      - "page not found"
+
+- task_id: fin-003
+  pack: finance
+  domain: edgar_full_text
+  difficulty: hard
+  nl_description: |
+    Go to https://efts.sec.gov/LATEST/search-index?q=%22climate+risk%22&dateRange=custom&startdt=2024-01-01&enddt=2024-12-31&forms=10-K and report the number of matching filings shown in the result count.
+  starting_url: https://efts.sec.gov/LATEST/search-index?q=%22climate+risk%22&dateRange=custom&startdt=2024-01-01&enddt=2024-12-31&forms=10-K
+  step_cap: 8
+  token_cap: 12000
+  wall_clock_cap_s: 90
+  success_criteria:
+    - type: regex
+      field: extracted
+      value: '\d+'
+  negative_oracle:
+    must_appear_on_final_page:
+      - "climate"
+    must_not_appear:
+      - "Service Unavailable"
+
+- task_id: fin-004
+  pack: finance
+  domain: news_verification
+  difficulty: hard
+  nl_description: |
+    Go to https://en.wikipedia.org/wiki/Apple_Inc. and find the section
+    about "supply chain" or "manufacturing". Extract the text that
+    discusses Apple's supplier network and country dependencies.
+  starting_url: https://en.wikipedia.org/wiki/Apple_Inc.
+  step_cap: 12
+  token_cap: 20000
+  wall_clock_cap_s: 120
+  success_criteria:
+    - type: contains
+      field: extracted
+      value: "Apple"
+  negative_oracle:
+    must_appear_on_final_page:
+      - "Apple"
+    must_not_appear:
+      - "page not found"
+
+- task_id: fin-005
+  pack: finance
+  domain: investor_relations
+  difficulty: medium
+  nl_description: |
+    Go to https://ir.berkshirehathaway.com and find the link to the most
+    recent annual report. Extract the URL of that PDF or page.
+  starting_url: https://ir.berkshirehathaway.com
+  step_cap: 8
+  token_cap: 12000
+  wall_clock_cap_s: 90
+  success_criteria:
+    - type: contains
+      field: extracted
+      value: "annual"
+  negative_oracle:
+    must_appear_on_final_page:
+      - "Berkshire"
+    must_not_appear:
+      - "page not found"
