@@ -36,6 +36,8 @@ from typing import Any
 
 from openai import AsyncOpenAI
 
+from shared.retry import is_transient_http_error, retry_async
+
 log = logging.getLogger(__name__)
 
 
@@ -146,29 +148,37 @@ async def _call_one(
             api_key=provider.api_key,
             timeout=timeout,
         )
-        # Retry on transient 429 (rate-limit) — exponential backoff up to 3 attempts.
-        last_exc: BaseException | None = None
-        for attempt in range(3):
-            try:
-                r = await client.chat.completions.create(
-                    model=provider.model,
-                    messages=messages,  # type: ignore[arg-type]
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    **extra,
-                )
-                return (r.choices[0].message.content or "").strip()
-            except Exception as exc:  # noqa: BLE001
-                last_exc = exc
-                msg = str(exc)
-                if "429" in msg or "Too Many Requests" in msg:
-                    backoff = 2 ** attempt  # 1s, 2s, 4s
-                    log.info("provider %s rate-limited (attempt %d), backing off %ds",
-                             provider.name, attempt + 1, backoff)
-                    await asyncio.sleep(backoff)
-                    continue
-                raise
-        raise last_exc if last_exc else RuntimeError("unreachable")
+        return await _create_with_retry(
+            client, provider.model, messages, max_tokens, temperature, extra,
+        )
+
+
+# Wrapped chat-completion call with transient-HTTP retry. Lives outside _call_one
+# so the decorator instance is created once at import time, not per-call. Retry
+# attempts honor the semaphore from the caller — held throughout the backoff.
+@retry_async(
+    max_attempts=int(os.environ.get("NIM_MAX_RETRY_ATTEMPTS", "3")),
+    base_delay=float(os.environ.get("NIM_RETRY_BASE_DELAY", "1.0")),
+    max_delay=10.0,
+    predicate=is_transient_http_error,
+    logger=log,
+)
+async def _create_with_retry(
+    client: AsyncOpenAI,
+    model: str,
+    messages: list[dict],
+    max_tokens: int,
+    temperature: float,
+    extra: dict[str, Any],
+) -> str:
+    r = await client.chat.completions.create(
+        model=model,
+        messages=messages,  # type: ignore[arg-type]
+        max_tokens=max_tokens,
+        temperature=temperature,
+        **extra,
+    )
+    return (r.choices[0].message.content or "").strip()
 
 
 def _role_providers(role: str) -> list[Provider]:
