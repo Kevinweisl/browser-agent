@@ -11,9 +11,12 @@
 #   default `python3`; jammy ships 3.10 and would force a deadsnakes PPA
 #   detour. Noble keeps the Dockerfile boring.
 #
-# Tag aligned with `playwright>=1.49` in pyproject.toml. v1.49.1 is the
-# last 1.49.x patch on MCR.
-FROM mcr.microsoft.com/playwright/python:v1.49.1-noble
+# Tag pinned to the same Playwright version we install via pip — see
+# `playwright==1.59.0` in pyproject.toml. The two MUST move together; if
+# pip installs a newer Playwright Python wrapper than the Chromium build
+# baked into this image, BrowserType.launch fails with "Executable doesn't
+# exist at /ms-playwright/chromium_headless_shell-XXXX/...".
+FROM mcr.microsoft.com/playwright/python:v1.59.0-noble
 
 # Faster, smaller pip; no .pyc clutter; unbuffered logs for `docker logs`.
 ENV PYTHONUNBUFFERED=1 \
