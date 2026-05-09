@@ -12,7 +12,7 @@ description: |
   Do NOT use for: simple HTTP GETs of static pages (use a regular fetch),
   parsing structured documents like SEC filings (use sec-extract-10k), or
   build/release pipelines (use build-and-release). Long-running (minutes),
-  stateful (cookies + selector cache), self-correcting (7-tier locator ladder).
+  stateful (cookies + selector cache), self-correcting (6-tier locator ladder + Healenium-style heal).
 allowed-tools: "Bash(playwright *)"
 worker_target: browser
 ---
@@ -26,8 +26,8 @@ with Postgres-persisted selector cache for cross-session self-maintenance.
 
 ```
 NL Task → Planner (LLM, K=1)
-         → Actor (steps with 7-tier locator ladder)
-         → Validator (LLM, K=3 ensemble — discrete pass/fail/replan)
+         → Actor (steps with 6-tier locator ladder)
+         → Validator (LLM, K=2 ensemble — discrete PASS/REPLAN/ABORT)
          → Selector cache (Postgres-backed; cross-session)
 ```
 
@@ -36,19 +36,19 @@ Three subsystems:
 | Subsystem | Role | Latency budget |
 |---|---|---|
 | **Planner** | Decompose NL task into ordered steps. Free-form output. | One-shot, ~5s |
-| **Actor** | Execute each step. For each click/type/extract, walks 7-tier locator ladder until one resolves. | Per-step, ~1-3s |
-| **Validator** | After each step, judge "did this advance the goal?" Discrete output (PASS/REPLAN/ABORT) → K=3 ensemble vote on this. | Per-step, ~2-5s |
+| **Actor** | Execute each step. For each click/type/extract, walks 6-tier locator ladder until one resolves. | Per-step, ~1-3s |
+| **Validator** | After each step, judge "did this advance the goal?" Discrete output (PASS/REPLAN/ABORT) → K=2 ensemble vote on this. | Per-step, ~2-5s |
 
-## 7-tier locator ladder (Stagehand-inspired)
+## 6-tier locator ladder (Playwright-recommended)
 
 For each user-visible action ("click the submit button"):
-1. **Cached selector** from `selector_cache` table (keyed on URL template + intent hash; if dom_hash matches, use it)
-2. `page.get_by_role("button", name="Submit")`
-3. `page.get_by_test_id(...)` / `page.get_by_label(...)`
-4. visible text: `page.get_by_text("Submit")`
-5. CSS class fragment / partial selector
-6. LLM-generated XPath fallback (last resort, expensive)
-7. **Fail and replan** — Validator promotes the step to "ABORT" → Planner re-plans
+1. **Cached selector** from `selector_cache` table (if dom_hash matches OR aria-fingerprint heals)
+2. `page.get_by_role(...)` — Playwright's official first choice
+3. `page.get_by_label(...)` — form-element preferred
+4. `page.get_by_test_id(...)` — automation-only
+5. `page.get_by_text(...)` — visible text anchor
+6. CSS without class chains (id / data-* only)
+7. **Vision fallback (stub)** — Computer Use beta integration point; not enabled by default
 
 Successful resolutions write back to `selector_cache` for next session.
 
@@ -86,5 +86,4 @@ of "click succeeded" feedback from the locator.
 
 ## Status
 
-Skeleton + cache schema in place; full Planner-Actor-Validator implementation
-on Day 6 per the project schedule.
+Production-ready. v7 eval = 10/10 across 10 generic + finance tasks; 3-run determinism = 30/30. See `evals/browser-tasks/last_run.json`.

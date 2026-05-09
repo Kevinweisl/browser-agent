@@ -6,14 +6,11 @@ Mocks the OpenAI client so we don't hit live endpoints in unit tests.
 from __future__ import annotations
 
 import asyncio
-import os
 from unittest.mock import patch
 
 import pytest
 
 from shared.llm_client import (
-    Provider,
-    VoteResult,
     _build_thinking_extra_body,
     _role_providers,
     _role_thinking,

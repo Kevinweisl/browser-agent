@@ -129,7 +129,7 @@ _MAX_CONCURRENT = int(os.environ.get("NIM_MAX_CONCURRENT", "3"))
 # when the loop is garbage-collected, the entry vanishes — no risk of an
 # id() being recycled and the cache returning a semaphore bound to a dead
 # loop. Recommended pattern in 2026-05-01-failure-mode-fixes.md §4.
-import weakref
+import weakref  # noqa: E402  -- intentional placement: see comment block above
 
 _provider_locks: weakref.WeakKeyDictionary[
     asyncio.AbstractEventLoop, dict[str, asyncio.Semaphore]

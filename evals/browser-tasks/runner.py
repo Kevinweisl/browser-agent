@@ -195,7 +195,7 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--tasks-file", type=Path,
                    default=Path(__file__).parent / "tasks.yaml")
-    p.add_argument("--pack", choices=["generic", "finance"], default=None)
+    p.add_argument("--pack", choices=["generic", "finance", "edge_case"], default=None)
     p.add_argument("--task", type=str, default=None,
                    help="Run only this task_id")
     p.add_argument("--out", type=Path,

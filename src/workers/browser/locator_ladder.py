@@ -1,19 +1,20 @@
-"""7-tier locator ladder.
+"""6-tier locator ladder + vision fallback stub.
 
 Order from cheapest/most-stable to most-expensive/least-stable, per the
 research delta (browser-agent-update.md §1):
 
-    1. CACHED          — selector_cache lookup, dom_hash match
+    1. CACHED          — selector_cache lookup; uses dom_hash equality first,
+                         falls back to aria-fingerprint heal on DOM drift
     2. GET_BY_ROLE     — Playwright official first choice
     3. GET_BY_LABEL    — form-element preferred
     4. GET_BY_TEST_ID  — automation-only, brittle to dev practice
     5. GET_BY_TEXT     — visible text anchor
     6. CSS_NO_CLASS    — id / data-* only (class chains are anti-pattern)
-    7. VISION_FALLBACK — Computer Use zoom+click (stub for Day 6 — needs
-                         Anthropic CU beta; real impl in a future task)
+    7. VISION_FALLBACK — Computer Use zoom+click stub (requires Anthropic CU
+                         beta; injection point exposed via constructor)
 
 We deliberately drop the original design's standalone "ARIA" tier (subsumed
-by `getByRole`) and "XPath" tier (Playwright officially anti-pattern).
+by `getByRole`) and "XPath" tier (Playwright officially anti-pattern, 2026).
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .schema import LocatorTier, SelectorHints
+from .selector_cache import CacheRecord, fingerprint_match
 
 if TYPE_CHECKING:
     from playwright.async_api import Locator, Page
@@ -38,6 +40,33 @@ class Resolution:
     selector: str            # serialized form for cache + audit
     locator: Locator
     cache_hit: bool = False
+    # Healed = cache hit took the "DOM drifted but fingerprint matched" path
+    # rather than the cheap dom_hash-equal path. Actor uses this to write
+    # `record_heal()` + refresh the cache row's dom_hash.
+    healed: bool = False
+    healing_diff: str | None = None
+
+
+# ── Aria-fingerprint extraction (pure function, used by heal path) ──────────
+
+async def aria_fingerprint_of(locator: Locator) -> dict | None:
+    """Extract the small fingerprint used by the Healenium-style heal logic.
+
+    Mirrors `actor._aria_fingerprint` — kept here as a pure helper so the
+    resolver doesn't import from the actor module (which would cycle).
+    On any failure, return None — fingerprint is best-effort.
+    """
+    try:
+        return {
+            "role": await locator.get_attribute("role"),
+            "aria_label": await locator.get_attribute("aria-label"),
+            "id": await locator.get_attribute("id"),
+            "data_testid": await locator.get_attribute("data-testid"),
+            "tag": (await locator.evaluate("el => el.tagName")).lower() if locator else None,
+            "text": (await locator.text_content() or "").strip()[:120],
+        }
+    except Exception:  # noqa: BLE001
+        return None
 
 
 # ── Heuristics for inferring tier-2-6 hints from a free-form intent ─────────
@@ -116,15 +145,51 @@ class LocatorResolver:
         hints: SelectorHints | None = None,
         cached_selector: str | None = None,
         cache_dom_match: bool = False,
+        cache_record: CacheRecord | None = None,
     ) -> Resolution | None:
         hints = hints or SelectorHints()
 
-        # Tier 1: cached selector (only if dom_hash matched)
+        # Tier 1a: dom_hash equal → cheap cache hit, no fingerprint check.
         if cached_selector and cache_dom_match:
             loc = self._materialize_serialized(page, cached_selector)
             narrowed = await _narrow(loc, hints) if loc is not None else None
             if narrowed is not None:
                 return Resolution(LocatorTier.CACHED, cached_selector, narrowed, True)
+
+        # Tier 1b: dom_hash drifted but we have a stored aria_fingerprint
+        # to anchor against. Try the cached selector — if it still resolves
+        # to a unique element AND that element's fingerprint matches the
+        # stored one (≥ 2/4 strong attrs), treat as a heal.
+        if (
+            cached_selector
+            and not cache_dom_match
+            and cache_record is not None
+            and cache_record.aria_fingerprint
+        ):
+            loc = self._materialize_serialized(page, cached_selector)
+            narrowed = await _narrow(loc, hints) if loc is not None else None
+            if narrowed is not None:
+                current_fp = await aria_fingerprint_of(narrowed)
+                matched, diff = fingerprint_match(
+                    cache_record.aria_fingerprint, current_fp,
+                )
+                if matched:
+                    log.info(
+                        "selector_cache heal: intent=%r diff=%s",
+                        intent, diff,
+                    )
+                    return Resolution(
+                        LocatorTier.CACHED,
+                        cached_selector,
+                        narrowed,
+                        cache_hit=True,
+                        healed=True,
+                        healing_diff=diff,
+                    )
+                log.info(
+                    "selector_cache fingerprint mismatch — falling through "
+                    "(intent=%r, diff=%s)", intent, diff,
+                )
 
         # Tier 2: getByRole
         role = hints.role or infer_role(intent)

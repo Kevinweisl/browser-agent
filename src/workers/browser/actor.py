@@ -31,7 +31,6 @@ from .selector_cache import (
     url_to_template,
 )
 
-
 # Hosts that REQUIRE a contact-email User-Agent per their fair-use policy
 # (sec.gov: "no more than 10 req/s"; rejects default Chrome UA with HTTP 403
 # "Your Request Originates from an Undeclared Automated Tool"). When we
@@ -103,6 +102,10 @@ class StepActor:
         self.resolver = resolver or LocatorResolver()
         self.cache_hits = 0
         self.cache_writes = 0
+        # Heals = cache hits that took the fingerprint-match drift recovery
+        # path (vs the cheap dom_hash-equal path). Counted separately so the
+        # TaskResult can report "self-maintenance ran N times".
+        self.cache_heals = 0
 
     async def execute(self, step: Step) -> StepResult:
         pre = await snapshot(self.page)
@@ -228,6 +231,21 @@ class StepActor:
                               error=f"wait_for failed: {exc}", pre=pre, post=post,
                               locator_tier=resolution.tier if resolution else None,
                               selector=resolution.selector if resolution else None)
+        # Treat a successful wait_for as a real "the cached selector still
+        # works" event — record heal + refresh dom_hash so future lookups
+        # short-circuit. We deliberately do NOT upsert when this was just a
+        # cheap dom_hash-equal hit (row already current).
+        if resolution is not None and resolution.healed:
+            self.cache_heals += 1
+            try:
+                await cache.record_heal(
+                    url_to_template(pre.url),
+                    step.target_intent,
+                    resolution.healing_diff or "fingerprint-matched",
+                )
+                await self._update_cache(step, resolution, pre.dom_hash, pre.url)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("selector_cache heal-record (wait_for) failed: %s", exc)
         post = await snapshot(self.page)
         return StepResult(step_index=step.step_index, success=True, pre=pre, post=post,
                           locator_tier=resolution.tier if resolution else None,
@@ -261,14 +279,32 @@ class StepActor:
 
         post = await snapshot(self.page)
 
-        # On success, persist to cache (but ONLY if we resolved via the ladder
-        # — pure CACHED hits already exist in the table)
+        # On success, persist to cache. Three cases:
+        #   1. ladder resolution (cache_hit=False)        → upsert from scratch
+        #   2. cheap cache hit (cache_hit, not healed)    → row is current, just bump counter
+        #   3. healed cache hit (cache_hit AND healed)    → record_heal + refresh dom_hash
+        #      so the next visit takes the cheap path
         if not resolution.cache_hit:
             try:
                 await self._update_cache(step, resolution, pre.dom_hash, pre.url)
                 self.cache_writes += 1
             except Exception as exc:  # noqa: BLE001
                 log.warning("selector_cache write failed: %s", exc)
+        elif resolution.healed:
+            self.cache_hits += 1
+            self.cache_heals += 1
+            try:
+                await cache.record_heal(
+                    url_to_template(pre.url),
+                    step.target_intent,
+                    resolution.healing_diff or "fingerprint-matched",
+                )
+                # Refresh dom_hash + fingerprint so the next lookup against
+                # this template hits the cheap dom_hash-equal path again
+                # rather than re-running the heal.
+                await self._update_cache(step, resolution, pre.dom_hash, pre.url)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("selector_cache heal-record failed: %s", exc)
         else:
             self.cache_hits += 1
 
@@ -293,6 +329,7 @@ class StepActor:
             hints=step.selector_hints,
             cached_selector=cached_selector,
             cache_dom_match=cache_dom_match,
+            cache_record=rec,
         )
 
     async def _update_cache(self, step: Step, resolution, pre_dom_hash: str, page_url: str):

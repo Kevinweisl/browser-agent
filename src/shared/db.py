@@ -7,7 +7,6 @@ from contextlib import asynccontextmanager
 
 import asyncpg
 
-
 _pool: asyncpg.Pool | None = None
 
 
@@ -30,6 +29,5 @@ async def close_pool() -> None:
 async def transaction():
     """Context manager yielding (conn) inside a transaction."""
     pool = await get_pool()
-    async with pool.acquire() as conn:
-        async with conn.transaction():
-            yield conn
+    async with pool.acquire() as conn, conn.transaction():
+        yield conn

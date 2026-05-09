@@ -1,0 +1,32 @@
+# Secrets — NEVER commit
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# Virtual envs
+.venv/
+venv/
+.python-version
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local working notes (kept gitignored — todo.md / lessons are dev-only)
+tasks/

@@ -13,7 +13,6 @@ from shared.retry import (
     retry_async,
 )
 
-
 # ── Predicates ───────────────────────────────────────────────────────────────
 
 def test_rate_limit_predicate_string_match():
@@ -45,7 +44,7 @@ def test_transient_http_includes_5xx():
 
 def test_transient_http_includes_timeout():
     assert is_transient_http_error(RuntimeError("connection timeout"))
-    assert is_transient_http_error(asyncio.TimeoutError("operation timed out"))
+    assert is_transient_http_error(TimeoutError("operation timed out"))
 
 
 def test_transient_http_excludes_4xx_other():

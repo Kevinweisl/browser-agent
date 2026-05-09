@@ -1,6 +1,7 @@
 """Entry point: `python -m workers.browser`"""
 
 from workers.base import run_worker
+
 from workers.browser.handlers import browser_task_handler
 
 HANDLERS = {

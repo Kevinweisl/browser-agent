@@ -144,6 +144,73 @@ async def record_heal(template: str, intent: str, diff: str) -> None:
         )
 
 
+# ── Fingerprint comparison (pure function, DB-free) ─────────────────────────
+
+# The four "strong" attributes used to anchor an element across DOM drift.
+# `tag` and `text` are deliberately excluded:
+#   - tag: usually redundant with role
+#   - text: too volatile (i18n, copy edits, count badges)
+_STRONG_ATTRS = ("role", "aria_label", "id", "data_testid")
+_HEAL_THRESHOLD = 2  # at least 2/4 strong attributes must match
+
+
+def fingerprint_match(
+    stored: dict | None,
+    current: dict | None,
+) -> tuple[bool, str]:
+    """Decide whether a current element is "the same" as a stored fingerprint.
+
+    Rules:
+      - If `stored.role` is not None, `current.role` MUST equal it. A role
+        change is a hard fail even if every other attribute matches —
+        clicking a `link` when we expected a `button` is a different action.
+      - At least `_HEAL_THRESHOLD` (2) of the strong attributes
+        `{role, aria_label, id, data_testid}` must match. None on both
+        sides counts as a match (the element legitimately lacks that
+        attribute); None on one side counts as neither match nor mismatch.
+
+    Returns `(matched, diff_summary)` where diff_summary is a short
+    human-readable string describing what changed — written into
+    `healing_diff` for the audit trail.
+    """
+    if not stored or not current:
+        return False, "missing fingerprint"
+
+    stored_role = stored.get("role")
+    current_role = current.get("role")
+    if stored_role is not None and stored_role != current_role:
+        return False, f"role drift: {stored_role!r} -> {current_role!r}"
+
+    matches: list[str] = []
+    diffs: list[str] = []
+    for attr in _STRONG_ATTRS:
+        s = stored.get(attr)
+        c = current.get(attr)
+        if s is None and c is None:
+            matches.append(f"{attr}=<both None>")
+            continue
+        if s is None or c is None:
+            # one-sided None: neither match nor mismatch; ignore
+            continue
+        if s == c:
+            matches.append(f"{attr}={s!r}")
+        else:
+            diffs.append(f"{attr}: {s!r} -> {c!r}")
+
+    matched = len(matches) >= _HEAL_THRESHOLD
+    if matched:
+        diff_summary = (
+            f"healed on {len(matches)}/{len(_STRONG_ATTRS)} strong attrs; "
+            f"changes: [{', '.join(diffs) or 'none'}]"
+        )
+    else:
+        diff_summary = (
+            f"only {len(matches)}/{len(_STRONG_ATTRS)} strong attrs match; "
+            f"changes: [{', '.join(diffs) or 'none'}]"
+        )
+    return matched, diff_summary
+
+
 def dom_hash_string(html: str) -> str:
     """Stable short fingerprint over the rendered DOM."""
     return hashlib.sha256(html.encode("utf-8", errors="ignore")).hexdigest()[:16]

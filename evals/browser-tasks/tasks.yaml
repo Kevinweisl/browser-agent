@@ -233,3 +233,93 @@
       - "Berkshire"
     must_not_appear:
       - "page not found"
+
+# ─── edge_case pack ──────────────────────────────────────────────────────────
+# Deliberately adversarial probes targeting the brief's "self-correction" and
+# "self-maintenance" axes. Each task is engineered so a naive agent (no replan,
+# no narrowing, no silent-failure detection) WILL fail the oracle in a
+# diagnosable way. Kept separate from the v7 10/10 generic+finance baseline so
+# regressions are attributable.
+#
+#   edge-001 — stale-url      → tests self-correction (must replan from 404)
+#   edge-002 — empty-search   → tests silent-failure prevention (must NOT fake success)
+#   edge-003 — ambiguous-elem → tests locator narrowing + multi-match handling
+
+- task_id: edge-001
+  pack: edge_case
+  domain: wiki
+  difficulty: hard
+  expected_self_correction: true
+  nl_description: |
+    Go to https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026
+    and find information about cats. If that URL is broken, recover by
+    searching Wikipedia for "Cat" and extract the article's opening
+    description.
+  starting_url: https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026
+  step_cap: 12
+  token_cap: 18000
+  wall_clock_cap_s: 300
+  success_criteria:
+    # 'Felis' is the genus name on the Cat article; 'domestic' shows in the
+    # opening sentence. Either proves we landed on the right article.
+    - type: regex
+      field: extracted
+      value: '(Felis|domestic)'
+  negative_oracle:
+    must_not_appear:
+      # The Wikipedia missing-article banner. If still on the 404 stub, fail.
+      - "does not have an article with this exact name"
+
+- task_id: edge-002
+  pack: edge_case
+  domain: search
+  difficulty: medium
+  expected_self_correction: true
+  nl_description: |
+    Go to https://en.wikipedia.org and search for the nonsense string
+    "qzxylkjasdf". Report whatever Wikipedia tells you about the search
+    result — if there are no matches, that IS the answer; do not invent
+    one.
+  starting_url: https://en.wikipedia.org
+  step_cap: 8
+  token_cap: 12000
+  wall_clock_cap_s: 240
+  success_criteria:
+    # Wikipedia's "no results" page wording varies: "no results", "did not
+    # match", "There were no results"... regex covers known variants.
+    - type: regex
+      field: extracted
+      value: '(?i)(no results|did not match|no .{0,12}matching|0 results)'
+  negative_oracle:
+    must_appear_on_final_page:
+      # Confirms agent reached the search results page (not stuck on home).
+      - "Search results"
+    must_not_appear:
+      # Main Page tagline; if present we're stuck on the homepage.
+      - "the free encyclopedia that anyone can edit"
+
+- task_id: edge-003
+  pack: edge_case
+  domain: wiki
+  difficulty: hard
+  expected_self_correction: true
+  nl_description: |
+    Go to https://en.wikipedia.org/wiki/Search_engine and click the "edit"
+    link for the first section (NOT the article-wide edit). The page has
+    many "edit" links — one per section plus an article-wide one — so
+    clicking the wrong one or all of them will fail. After clicking,
+    extract the heading of the resulting edit page.
+  starting_url: https://en.wikipedia.org/wiki/Search_engine
+  step_cap: 10
+  token_cap: 15000
+  wall_clock_cap_s: 240
+  success_criteria:
+    # MediaWiki edit views begin with "Editing " for full-article and
+    # "Editing Search engine (section)" for section edits — either is fine.
+    - type: regex
+      field: extracted
+      value: 'Editing (Search engine|Section)'
+  negative_oracle:
+    must_appear_on_final_page:
+      - "Wikipedia"
+      - "edit"

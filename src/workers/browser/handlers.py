@@ -209,6 +209,7 @@ async def run_task(task_input: TaskInput) -> TaskResult:
         extracted_content=extracted_content,
         selector_cache_hits=actor.cache_hits if 'actor' in locals() else 0,
         selector_cache_writes=actor.cache_writes if 'actor' in locals() else 0,
+        healed_selector_count=actor.cache_heals if 'actor' in locals() else 0,
         duration_ms=duration_ms,
         fail_reason=fail_reason,
     )
