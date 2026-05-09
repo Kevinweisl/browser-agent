@@ -1,9 +1,9 @@
-// browser-agent demo — vanilla JS, no framework.
+// browser-agent demo, vanilla JS, no framework.
 //
 // Flow: POST /api/run → poll /api/status/{id} every 1.5s → on done,
 // GET /api/result/{id} for the full TaskResult and render.
 //
-// The trajectory table is the centerpiece — every column is a signal a
+// The trajectory table is the centerpiece, every column is a signal a
 // reviewer should be able to read at a glance: tier, cache_hit, healed,
 // validator decision, silent-failure signals, replan boundaries.
 
@@ -198,7 +198,7 @@ function resetPanels() {
   lastRenderedTrajectoryLength = 0;
   els.resultCard.hidden = true;
   els.resultStats.innerHTML = "";
-  els.resultExtracted.textContent = "—";
+  els.resultExtracted.textContent = "-";
   els.failBlock.hidden = true;
 }
 
@@ -222,7 +222,7 @@ async function pollLoop(taskId) {
 
     // Stream trajectory: backend appends to trajectory_so_far via
     // handlers.run_task event_callback as each step finishes. renderTrajectory
-    // is incremental — it only paints rows past lastRenderedTrajectoryLength.
+    // is incremental, it only paints rows past lastRenderedTrajectoryLength.
     if (status.trajectory_so_far && status.trajectory_so_far.length > 0) {
       renderTrajectory(status.trajectory_so_far);
     }
@@ -259,7 +259,7 @@ function sleep(ms) {
 
 // ── Render: full TaskResult ───────────────────────────────────────────────
 function renderResult(result) {
-  // 1. Plan panel — derived from the trajectory's `step` fields. We don't
+  // 1. Plan panel, derived from the trajectory's `step` fields. We don't
   //    have a separate "initial plan" payload (replans rewrite `steps` in
   //    place), so we just show the steps that actually executed.
   const steps = result.trajectory.map((e) => e.step);
@@ -279,7 +279,7 @@ function renderResult(result) {
   // 3. Result stats + extracted
   const stats = [
     ["status", result.ok ? "OK" : "FAIL"],
-    ["fail_reason", result.fail_reason || "—"],
+    ["fail_reason", result.fail_reason || "-"],
     ["duration", `${(result.duration_ms / 1000).toFixed(1)}s`],
     ["steps", String(result.trajectory.length)],
     ["cache_hits", String(result.selector_cache_hits || 0)],
@@ -314,7 +314,7 @@ function renderResult(result) {
 
 // ── Render: trajectory rows ───────────────────────────────────────────────
 // Trajectory is append-only on the server (handlers.run_task only appends to
-// `trajectory` — replans don't rewrite history), so the UI can append-only too.
+// `trajectory`, replans don't rewrite history), so the UI can append-only too.
 // We track lastRenderedTrajectoryLength to avoid the O(N²) thrash of clearing
 // and rebuilding the whole table every poll.
 function renderTrajectory(events) {
@@ -369,12 +369,12 @@ function buildTrajectoryRow(event, i) {
   const tdIntent = td(escapeHTML(intentText));
   tdIntent.className = "col-intent";
 
-  const tier = result.locator_tier || "—";
+  const tier = result.locator_tier || "-";
   const tierClass = (tier === "cached" && result.cache_hit) ? "tier tier-cached" : "tier";
   const tdTier = document.createElement("td");
   tdTier.innerHTML = `<span class="${tierClass}">${escapeHTML(tier)}</span>`;
 
-  const tdSelector = td(result.selector ? escapeHTML(result.selector) : "—");
+  const tdSelector = td(result.selector ? escapeHTML(result.selector) : "-");
   tdSelector.className = "col-selector";
 
   // tier=cached + cache_hit=false ⇒ resolver fell into the heal branch (the
@@ -386,7 +386,7 @@ function buildTrajectoryRow(event, i) {
     chips.push(`<span class="flag-chip flag-warn">healed</span>`);
   }
   if (!result.success) chips.push(`<span class="flag-chip flag-bad">step_fail</span>`);
-  tdFlags.innerHTML = chips.join(" ") || "—";
+  tdFlags.innerHTML = chips.join(" ") || "-";
 
   const tdValidator = document.createElement("td");
   const conf = validation && typeof validation.confidence === "number"
@@ -397,7 +397,7 @@ function buildTrajectoryRow(event, i) {
   const tdSignals = document.createElement("td");
   const signals = (validation && validation.silent_failure_signals) || [];
   if (signals.length === 0) {
-    tdSignals.textContent = "—";
+    tdSignals.textContent = "-";
   } else {
     tdSignals.innerHTML = `<div class="signals">${signals
       .map((s) => `<span class="flag-chip ${signalClass(s)}">${escapeHTML(s)}</span>`)

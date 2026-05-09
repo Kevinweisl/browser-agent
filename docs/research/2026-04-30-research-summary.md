@@ -1,4 +1,4 @@
-# Research Summary — 2026-04-30
+# Research Summary, 2026-04-30
 
 研究來源：三個並行 subagent (general-purpose) 於 2026-04-30 執行，each ~5-10 min compute。
 研究範圍對齊 `tasks/todo.md` 中的 13 個 topics。
@@ -69,7 +69,7 @@
 
 ### B2. Self-correction 真實實作（不是 try/except retry）
 1. **Planner-Actor-Validator 三段架構**（核心）
-2. **Reflexion 自反思記憶** — 失敗 trajectory 寫入 SQLite，下次 retrieve top-k
+2. **Reflexion 自反思記憶**, 失敗 trajectory 寫入 SQLite，下次 retrieve top-k
 3. **DOM mutation diff**：action 後 DOM/URL/screenshot 都沒變 → silent no-op
 4. **Multi-strategy fallback**：visual / DOM / keyboard / search box → 連續失敗升級
 5. **LLM 條件驗證 (ProCo)**：把任務關鍵條件遮蔽，從 trajectory 推回去驗證
@@ -131,7 +131,7 @@ when_to_use: <trigger phrases>        # optional
 2. 公式：`[動詞] [object] [output] + Use when [trigger phrases including synonyms]`
 3. front-load 關鍵 use case
 4. **Pushy 對抗 undertrigger**："Make sure to use this skill whenever ..."
-5. 同義詞與 intent phrasing — 寫使用者實際會說的話
+5. 同義詞與 intent phrasing, 寫使用者實際會說的話
 
 ### C4. 如何 TEST trigger accuracy（評分點）
 **內建 eval harness 是 deliverable**：

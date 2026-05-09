@@ -1,4 +1,4 @@
-# Skill Conventions — Verification & Gap-Fill (2026-05-01)
+# Skill Conventions, Verification & Gap-Fill (2026-05-01)
 
 Source: subagent run (general-purpose, ~18 tool uses, 2.7 min wall-clock).
 Triggered by Day 5 audit of the 4 CI/CD SKILL.md files we authored earlier.
@@ -65,11 +65,11 @@ Measured first-decisive-keyword position across 10 real skills:
 
 Median: ~9. **Anthropic's pdf and docx fail this metric** at 56 and 60.
 Trail of Bits and superpowers consistently hit ≤9. Our 4 CI/CD skills all
-land at 4-8 — better than Anthropic's own examples on this dimension.
+land at 4-8, better than Anthropic's own examples on this dimension.
 
 ---
 
-## kaochenlong tutorial — verbatim Chinese passages
+## kaochenlong tutorial, verbatim Chinese passages
 
 Prior research only inferred. Verbatim:
 
@@ -78,7 +78,7 @@ Prior research only inferred. Verbatim:
 > 「Agent 讀到 description 之後,才能正確判斷『這個對話跟這個 Skills 有沒有關』。」
 
 The article does NOT discuss trigger eval or DO-NOT-TRIGGER patterns. It
-stops at "third-person + clear" — basic. Our methodology is meaningfully
+stops at "third-person + clear", basic. Our methodology is meaningfully
 deeper than the brief's referenced tutorial. Citing it as the floor we
 build above is appropriate.
 
@@ -92,7 +92,7 @@ Each skill received one targeted edit. Diffs committed in
 | Skill | Edit | Rationale |
 |---|---|---|
 | **lint-and-test** | Add `mypy`, `prettier`, `ESLint + jest`, `type-check` triggers; convert `(use sister)` to `For X, use sister instead.` | Boundary heuristics from prior research line 237 listed these but description didn't include them. Imperative redirect (new finding 1). |
-| **build-and-release** | Drop the wasted-words explanation of `disable-model-invocation` (router skips this skill anyway); use the freed ~30 chars for `tag v1.2.3`, `twine upload`, `ghcr`, `github release` triggers. | Wasted words anti-pattern (A6 length pitfall in prior research). The router doesn't need to know WHY disable-model-invocation matters — it just acts on the flag. |
+| **build-and-release** | Drop the wasted-words explanation of `disable-model-invocation` (router skips this skill anyway); use the freed ~30 chars for `tag v1.2.3`, `twine upload`, `ghcr`, `github release` triggers. | Wasted words anti-pattern (A6 length pitfall in prior research). The router doesn't need to know WHY disable-model-invocation matters, it just acts on the flag. |
 | **dependency-audit** | Replace abstract `at the dependency tree level` with natural-language phrases: `is lodash safe`, `any CVEs in our packages`, `scan our requirements.txt`. | Users don't say "at the dependency tree level"; they say "is lodash safe". The kaochenlong principle: write like the user, not like the spec. |
 | **security-scan** | Add explicit disambiguation hint: `These are queries about CODE WE WROTE, not LIBRARIES WE IMPORTED. For known CVEs in third-party packages (lodash, requests, etc.), use dependency-audit instead.` | Mirrors the killer pattern from xlsx's "primary input or output" but in plainer English. Resolves the most likely sister-skill conflict (security-scan ↔ dependency-audit). |
 
@@ -103,17 +103,17 @@ passed the front-load threshold (decisive keyword ≤ 8 chars from start).
 
 ## What we deliberately did NOT change
 
-1. **Hello, sec-extract-10k, browser-task descriptions** — out of audit scope
+1. **Hello, sec-extract-10k, browser-task descriptions**, out of audit scope
    (Task 2 / Task 3, not Task 1). Their descriptions are well-formed at
    276 / 885 / 888 chars. Re-audit if Day 6 trigger eval surfaces issues.
 
-2. **`disable-model-invocation: true` on `build-and-release`** — kept. Prior
+2. **`disable-model-invocation: true` on `build-and-release`**, kept. Prior
    research line 31 documented Trail of Bits' `git-cleanup` precedent. The
    only change was removing the IN-DESCRIPTION explanation of WHY (waste of
    description budget; the YAML field is what matters).
 
 3. **The "Multi-tool pipeline" / "Multi-tool orchestration" headings inside
-   each SKILL.md body** — these support `docs/per-task/task1-skills-platform.md`
+   each SKILL.md body**, these support `docs/per-task/task1-skills-platform.md`
    "Design Patterns Demonstrated" table. Body content doesn't compete for
    the 1024-char description budget; it explains the implementation for
    future maintainers.
@@ -128,9 +128,9 @@ observe whether:
 - FPR per skill ≤ 0.2 (should-not-trigger queries don't pick this skill)
 
 If TPR is below 0.8 on any skill, the most likely cause is missing trigger
-keywords (under-specification) — fix is to add 1-2 more natural phrases.
+keywords (under-specification), fix is to add 1-2 more natural phrases.
 
-If FPR is above 0.2, the most likely cause is sister-skill conflict — fix
+If FPR is above 0.2, the most likely cause is sister-skill conflict, fix
 is to strengthen the imperative redirect or add a more explicit
 disambiguation clause (like the `code we wrote vs libraries we imported`
 hint we just added to security-scan).

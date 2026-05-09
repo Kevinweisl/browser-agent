@@ -1,4 +1,4 @@
-# AI Coding Test 2026 — Design Spec
+# AI Coding Test 2026, Design Spec
 
 **作者**：Kevin Wei
 **日期**：2026-04-30
@@ -158,7 +158,7 @@ export ANTHROPIC_API_KEY=...
 
 ---
 
-## 3. Task 1 — Claude Skills CI/CD 平台
+## 3. Task 1, Claude Skills CI/CD 平台
 
 ### 3.1 範疇
 打造 **Skills 平台** + **4 個 CI/CD skill** + **trigger eval harness**。
@@ -235,16 +235,16 @@ allowed-tools: Bash(semgrep *) Bash(gitleaks *) Bash(trivy *) Read
 
 **評分軸明文要求「Skill description 能否被 Claude 精準 trigger」→ 用量化證據打**。
 
-#### 設計（採 Anthropic 自家 skill-creator 的方法論——見 `docs/research/2026-04-30-skill-conventions-research.md`）
+#### 設計（採 Anthropic 自家 skill-creator 的方法論--見 `docs/research/2026-04-30-skill-conventions-research.md`）
 
 - **跑全 7 個 skill 的 trigger eval**（4 CI/CD + `browser-task` + `sec-extract-10k` + `hello`）。理由：要證明 description 在「**多元 skill 並存**」時還能精準 disambiguate。
 - 每個 skill 一個 `evals/skill-trigger/{skill_name}.json`，含 8-10 條 `should_trigger` + 8-10 條 `should_not_trigger`（共 20 queries/skill，**對齊 Anthropic skill-creator 預設**）。
-- `should_not_trigger` **必須包含 sister-skill 的 trigger query**——例如 `lint-and-test` 的 should-not 包含「fix this CVE in lodash」（應導向 `dependency-audit`）、`dependency-audit` 的 should-not 含「scan my code for SQL injection」（應導向 `security-scan`）。研究階段挖到的 jeremylongshore CI/CD skill 災難就是因為沒做這件事。
+- `should_not_trigger` **必須包含 sister-skill 的 trigger query**--例如 `lint-and-test` 的 should-not 包含「fix this CVE in lodash」（應導向 `dependency-audit`）、`dependency-audit` 的 should-not 含「scan my code for SQL injection」（應導向 `security-scan`）。研究階段挖到的 jeremylongshore CI/CD skill 災難就是因為沒做這件事。
 - `scripts/run_skill_eval.py`：呼叫 LLM API，每 query 跑 3 次取多數，記錄 trigger/not-trigger
 - **0.4 holdout**（60% train / 40% test，stratified by `should_trigger`）
 - 5 輪 description iteration：找 train fail case → meta-prompt 改 description → re-test。**用 test (held-out) score 選 best 版本，不用 train**（避免 overfit）。
 - 最終 report：每 skill 改前/改後 train + test pass rate + before/after description diff + confusion matrix（哪些 skill pairs 容易混淆）
-- 用 `${TRIGGER_EVAL_MODEL}` 跑 eval（**不預設 Haiku**——trigger 行為與 production 用的 Sonnet/Opus 不同）
+- 用 `${TRIGGER_EVAL_MODEL}` 跑 eval（**不預設 Haiku**--trigger 行為與 production 用的 Sonnet/Opus 不同）
 
 #### 預估成本
 7 skills × 20 queries × 3 runs ≈ 420 calls baseline；5 輪 iteration（每輪只重跑 1 worst skill）≈ 4 × 60 = 240 calls；總 ≈ 660 calls × ~$0.003/call (Sonnet 級) ≈ **$2-5 LLM cost** for full 5-round iteration on all 7 skills.
@@ -292,7 +292,7 @@ allowed-tools: Bash(semgrep *) Bash(gitleaks *) Bash(trivy *) Read
 
 ---
 
-## 4. Task 3 — SEC 10-K Item-level 抽取（主力）
+## 4. Task 3, SEC 10-K Item-level 抽取（主力）
 
 ### 4.1 輸出 Schema
 
@@ -369,17 +369,17 @@ type Item = {
 
 #### 4.3.1 Eval set 規模
 - **Gold (人工標註) ≥ 3 個**：覆蓋三個時代
-  1. Apple 2024 (CIK 320193, 0000320193-24-000123) — canonical post-iXBRL + Item 1C + Part III by-ref
-  2. GE 2021 (CIK 40545, 0000040545-21-000011) — cross-ref TOC、conglomerate
-  3. Chemical Banking 1995 (CIK 19617, 0000950123-95-000706) — pre-HTML SGML/.txt
+  1. Apple 2024 (CIK 320193, 0000320193-24-000123), canonical post-iXBRL + Item 1C + Part III by-ref
+  2. GE 2021 (CIK 40545, 0000040545-21-000011), cross-ref TOC、conglomerate
+  3. Chemical Banking 1995 (CIK 19617, 0000950123-95-000706), pre-HTML SGML/.txt
 - **Silver (用 edgartools 為 baseline，人工抽查) ≥ 7 個**：
-  4. Berkshire 2026 (CIK 1067983, 0001193125-26-083899) — conglomerate latest
-  5. Berkshire 2019 (CIK 1067983, 0001193125-19-048926) — pre-iXBRL conglomerate
-  6. Intel 2022 (CIK 50863, 0000050863-22-000007) — Item 9C 邊界
-  7. Intel 2020 (CIK 50863, 0000050863-20-000011) — 大檔 (143 MB)
-  8. Apple 2023 (CIK 320193, 0000320193-23-000106) — Item 1C negative control
-  9. Goldman 10-K/A 2024 (CIK 886982, 0000886982-24-000012) — Part III only amendment
-  10. John Deere Owner Trust 2024 (CIK 1816589, 0001558370-24-000566) — ABS, non_standard
+  4. Berkshire 2026 (CIK 1067983, 0001193125-26-083899), conglomerate latest
+  5. Berkshire 2019 (CIK 1067983, 0001193125-19-048926), pre-iXBRL conglomerate
+  6. Intel 2022 (CIK 50863, 0000050863-22-000007), Item 9C 邊界
+  7. Intel 2020 (CIK 50863, 0000050863-20-000011), 大檔 (143 MB)
+  8. Apple 2023 (CIK 320193, 0000320193-23-000106), Item 1C negative control
+  9. Goldman 10-K/A 2024 (CIK 886982, 0000886982-24-000012), Part III only amendment
+  10. John Deere Owner Trust 2024 (CIK 1816589, 0001558370-24-000566), ABS, non_standard
 - **Total: 10 個 filings**
 - 涵蓋：1995/2019/2020/2021/2022/2023/2024/2026 八個年份；不同產業（科技、銀行、conglomerate、ABS、半導體、汽車金融）
 
@@ -422,7 +422,7 @@ GET /runs/:run_id/stream  (SSE)
 
 ---
 
-## 5. Task 2 — Generalized Browser Automation Agent
+## 5. Task 2, Generalized Browser Automation Agent
 
 ### 5.1 架構：Planner-Actor-Validator + Stagehand-style cached selector
 
@@ -738,7 +738,7 @@ interview_hw/
 
 ---
 
-## 附錄 A — Pathological Filings 列表（從研究階段保留）
+## 附錄 A, Pathological Filings 列表（從研究階段保留）
 
 | # | Company | CIK | Accession | 用途 |
 |---|---|---|---|---|
@@ -755,7 +755,7 @@ interview_hw/
 
 詳細 metadata 與 pathological 原因見 `docs/research/2026-04-30-research-summary.md` Section A5。
 
-## 附錄 B — 本 spec 引用的關鍵 sources
+## 附錄 B, 本 spec 引用的關鍵 sources
 
 - edgartools v5.30.2: https://github.com/dgunning/edgartools
 - Skyvern 2.0 SOTA: https://www.skyvern.com/blog/skyvern-2-0-state-of-the-art-web-navigation-with-85-8-on-webvoyager-eval/

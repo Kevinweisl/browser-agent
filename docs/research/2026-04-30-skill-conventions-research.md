@@ -1,4 +1,4 @@
-# Skill Conventions — Deep Research (2026-04-30)
+# Skill Conventions, Deep Research (2026-04-30)
 
 Source: subagent run (general-purpose, 56 tool uses, 8 min wall-clock).
 
@@ -14,13 +14,13 @@ Verbatim quotes from raw GitHub URLs; all citations are dated 2026-04-30.
 
 1. **Hard `description` limit: 1024 chars.** Listing budget for skill name +
    description is ~1,536 chars. **Front-load** the key trigger keywords.
-2. **`when_to_use` field — don't use it.** Claude-Code-only; almost no real
+2. **`when_to_use` field, don't use it.** Claude-Code-only; almost no real
    skill in the wild uses it. Fold trigger phrases into `description`.
 3. **Voice: third-person, present-tense, verb-first.** "Runs lint and tests
    …" not "I help you run …" or "You can use this to …".
 4. **Adopt skill-creator's eval methodology** (Anthropic's own `run_loop.py`):
    - 20 queries per skill (8-10 should-trigger + 8-10 should-NOT-trigger)
-   - **Should-not-trigger queries MUST include sister-skill triggers** —
+   - **Should-not-trigger queries MUST include sister-skill triggers** -
      e.g. `lint-and-test` should-not includes "fix this CVE in lodash"
      so the description learns to defer to `dependency-audit`
    - 3 runs per query, majority vote
@@ -30,7 +30,7 @@ Verbatim quotes from raw GitHub URLs; all citations are dated 2026-04-30.
      stream-json output (run_eval.py:detection logic)
 5. **`disable-model-invocation: true` is recommended for `build-and-release`**.
    Strong precedent: Trail of Bits' `git-cleanup` uses it for irreversible ops.
-   Releases are tag/digest writes — Claude shouldn't auto-decide to ship.
+   Releases are tag/digest writes, Claude shouldn't auto-decide to ship.
 6. **Add explicit DO-NOT-TRIGGER list to each description**. Anthropic's
    xlsx/docx/pptx skills do this; without it, sibling skills with overlapping
    keywords (e.g. dependency-audit vs security-scan on "vulnerability") will
@@ -49,10 +49,10 @@ Verbatim quotes from raw GitHub URLs; all citations are dated 2026-04-30.
 |---|---|---|---|
 | `name` | Yes | 1-64 chars | lowercase + digits + `-`; must match parent dir; cannot contain `anthropic` or `claude` |
 | `description` | Yes | 1-1024 chars | non-empty, no XML tags; must state WHAT and WHEN |
-| `license` | No | — | recommended |
+| `license` | No |, | recommended |
 | `compatibility` | No | 1-500 chars | env requirements |
-| `metadata` | No | — | string→string map |
-| `allowed-tools` | No | — | **experimental**; space-separated string |
+| `metadata` | No |, | string→string map |
+| `allowed-tools` | No |, | **experimental**; space-separated string |
 
 ### Claude-Code-specific extensions
 
@@ -75,7 +75,7 @@ Anthropic's `/v1/skills` API.
 
 ---
 
-## skill-creator's Eval Methodology — Adopted Verbatim
+## skill-creator's Eval Methodology, Adopted Verbatim
 
 Source: `anthropics/skills/skills/skill-creator/scripts/run_loop.py` argparse defaults.
 
@@ -91,11 +91,11 @@ Source: `anthropics/skills/skills/skill-creator/scripts/run_loop.py` argparse de
 
 ### Eval-set authoring rules (from skill-creator SKILL.md, verbatim)
 
-- Should-trigger: 8-10 queries with **different phrasings of the same intent** —
+- Should-trigger: 8-10 queries with **different phrasings of the same intent** -
   formal, casual, file-mention, file-not-mentioned-but-clearly-needed.
-- Should-not-trigger: 8-10 **near-misses** — queries that share keywords or
+- Should-not-trigger: 8-10 **near-misses**, queries that share keywords or
   concepts but actually need something different. **Don't pick obviously
-  irrelevant queries** like "write a fibonacci function" — they don't
+  irrelevant queries** like "write a fibonacci function", they don't
   discriminate.
 
 ### Eval JSON format
@@ -113,13 +113,13 @@ Source: `anthropics/skills/skills/skill-creator/scripts/run_loop.py` argparse de
 `.claude/commands/<skill-name>-skill-<uuid>.md`, runs
 `claude -p <query> --output-format stream-json --include-partial-messages`,
 and parses `content_block_start` events for `tool_use` of `Skill` or `Read`
-where the input contains the temp skill name. Early detection — does not
+where the input contains the temp skill name. Early detection, does not
 wait for full assistant output.
 
 ### Caveat (skill-creator SKILL.md verbatim)
 
 > "Claude only consults skills for tasks it can't easily handle on its
-> own — simple, one-step queries like 'read this PDF' may not trigger a
+> own, simple, one-step queries like 'read this PDF' may not trigger a
 > skill even if the description matches perfectly. Make queries substantive."
 
 ---
@@ -203,19 +203,19 @@ application", "create pipeline", or "automate deployment".'
 ```
 
 This identical wording is used across `building-cicd-pipelines`,
-`orchestrating-deployment-pipelines`, `managing-deployment-rollbacks` —
+`orchestrating-deployment-pipelines`, `managing-deployment-rollbacks` -
 all three trigger on every CI query. **This is the trap our 4 skills must
 avoid.** Each sister skill needs unique nouns and DO-NOT-TRIGGER clauses.
 
 ### A4. Pushy when it backfires
 
 `"Make sure to use this skill whenever..."` is **good** when the skill is
-unique in its niche. **Bad** when 4 sibling skills all say it — produces
+unique in its niche. **Bad** when 4 sibling skills all say it, produces
 over-triggering and wrong-skill picks.
 
 ### A5. Time-locked
 
-Avoid `"Use the v2 API endpoint after August 2025"` — best-practices doc
+Avoid `"Use the v2 API endpoint after August 2025"`, best-practices doc
 explicitly calls this out.
 
 ### A6. Length pitfalls

@@ -1,4 +1,4 @@
-# Browser-Agent SOTA Delta — 2026-05-01
+# Browser-Agent SOTA Delta, 2026-05-01
 
 **Scope**: only what changed since `2026-04-30-research-summary.md` §B (last ~60 days, with focus on 2026-02 → 2026-05).
 **Method**: 12 targeted web queries + 6 page fetches. Source list at bottom.
@@ -14,7 +14,7 @@
 2. **Stagehand v3 (2026-Q2) 已從 Playwright 解耦改用 CDP-native + 自帶 `deepLocator`**（穿 iframe + shadow DOM）+ 自動 action caching（~2× 快、~30% 省 cost）。**我們的 cache 設計仍領先於 simple per-call cache，但 Stagehand 已內建 selector→action 雙層 cache，需 reframe 為 "intent-level + DOM-fingerprint"**。
 3. **Anthropic Computer Use beta 已升級至 `computer-use-2025-11-24`**，Opus 4.7 支援 `zoom` action（區域全解析度放大）+ 1:1 coordinate（無需 scale-factor 數學）。**vision-grounding 不再貴得難用，但仍比 DOM-only 慢 2-3×**，作 fallback 即可，不要 promote 為 default。
 4. **Hybrid > pure CUA > pure DOM**：Stagehand 官方文件直接列出三模式（DOM / CUA / Hybrid），**Hybrid 是 Browser-Use Cloud (78%) 與 Anthropic-自家 agent 都採用的形態**。我們的 7-tier ladder 應整合為 **「DOM 1-6 → CUA zoom→click」**，不要把 vision 當第 7 層獨立工具。
-5. **Playwright 2026 官方反 XPath、反 `nth/first/last`、反 CSS-class**；新推 `ariaSnapshot` 作 page-state diff 的 cheap signal — **silent-failure cascade 應加入 ariaSnapshot diff 作為 DOM diff 的更穩版本**。
+5. **Playwright 2026 官方反 XPath、反 `nth/first/last`、反 CSS-class**；新推 `ariaSnapshot` 作 page-state diff 的 cheap signal, **silent-failure cascade 應加入 ariaSnapshot diff 作為 DOM diff 的更穩版本**。
 
 ---
 
@@ -24,16 +24,16 @@
 - **CDP-native，移除 Playwright 強依賴**：「Stagehand v3 moved to a CDP-native architecture that talks directly to the browser through the Chrome DevTools Protocol, removing the Playwright dependency and improving performance by 44% on complex DOM interactions.」（NxCode 2026 / Browserbase changelog）
 - **Multi-language**：Python / Go / Java / Ruby / Rust 全支援（Browserbase changelog）。對我們：**仍用 Python，但確認 Python SDK 的 feature parity**。
 - **三模式正式化**（重要，直接影響我們架構）：
-  - `mode: "cua"` — 用 Anthropic / OpenAI / Google CUA 模型，coordinate-based
-  - `mode` 預設 — DOM + accessibility tree
-  - `mode: "hybrid"` — 兩者並用，Stagehand 推薦 Claude / 最新 Gemini
+  - `mode: "cua"`, 用 Anthropic / OpenAI / Google CUA 模型，coordinate-based
+  - `mode` 預設, DOM + accessibility tree
+  - `mode: "hybrid"`, 兩者並用，Stagehand 推薦 Claude / 最新 Gemini
   > 「Both DOM and CUA modes have their strengths and weaknesses. Hybrid mode combines them.」（docs.stagehand.dev/v3/basics/agent）
 - **Action caching 自動內建**：「Stagehand now caches the results of repeated actions, eliminating redundant LLM calls automatically, resulting in up to 2× faster execution and approximately 30% cost reduction on repeat workflows.」（Browserbase changelog）
 - **`deepLocator()`**：「creates a special locator that can traverse iframe boundaries and shadow DOM using a simplified syntax. It automatically resolves the correct frame for each operation」（docs.stagehand.dev/v3/references/deeplocator）。**這直接解掉 7-tier ladder 的 shadow DOM 死角**。
 - **預設 viewport 1288×711**：偏離者 performance 降低（docs）。
 
 ### Browser-Use（2026-Q1/Q2）
-- **WebVoyager 89.1%**（GPT-4o）— 仍是最強 OSS baseline。
+- **WebVoyager 89.1%**（GPT-4o）- 仍是最強 OSS baseline。
 - **CLI 2.0 released 2026-03-22**：可從 terminal 直接喚起，整合 Claude Code / Cursor。
 - **官方 benchmark 結果（browser-use.com/posts/ai-browser-agent-benchmark）**：
   - Browser Use Cloud `bu-ultra` = **78%**（最強）
@@ -68,7 +68,7 @@
 ## §2 Playwright 2026 locator best practices delta
 
 ### 確認的官方排序
-> 「prioritize user-facing attributes and explicit contracts such as `page.getByRole()`」 — Playwright official best practices
+> 「prioritize user-facing attributes and explicit contracts such as `page.getByRole()`」, Playwright official best practices
 
 **官方推薦順序**（來源 playwright.dev/docs/locators + best-practices）：
 1. `getByRole(name)`
@@ -174,7 +174,7 @@
 1. **ARIA Snapshot 取代 raw DOM diff**：filter 掉 layout 雜訊，**省 token + 抗 CSS shake**。
    - 推薦：cheap layer 1 改為 `await expect(locator).toMatchAriaSnapshot()`；falsy 才升級到 layer 2-4
 2. **「healed test 沉默漂移」是 2026 新討論的 failure mode**：
-   > 「Healed tests can silently drift from original intent — the agent adapted to a UI change, but it's now testing a different flow than what you designed, with the assertion passing but asserting the wrong thing.」（bug0.com）
+   > 「Healed tests can silently drift from original intent, the agent adapted to a UI change, but it's now testing a different flow than what you designed, with the assertion passing but asserting the wrong thing.」（bug0.com）
    - **應對**：每個 task 必填 negative oracle（這條原本就在我們設計裡）+ healed selector 必須附「healing diff」log，cron 每天 review
 
 ### Reflexion / ProCo 變體
@@ -351,39 +351,39 @@ if all_dom_locators_failed():
 ## Sources
 
 ### Stagehand v3
-- [Stagehand v3 Changelog](https://www.browserbase.com/changelog/stagehand-v3) — Browserbase, 2026
-- [Stagehand Docs / Agent](https://docs.stagehand.dev/v3/basics/agent) — accessed 2026-05-01
-- [Stagehand deepLocator](https://docs.stagehand.dev/v3/references/deeplocator) — accessed 2026-05-01
-- [Stagehand vs Browser Use vs Playwright (NxCode)](https://www.nxcode.io/resources/news/stagehand-vs-browser-use-vs-playwright-ai-browser-automation-2026) — 2026
-- [Stagehand shadow DOM release](https://www.browserbase.com/changelog/stagehand-new-release-feat-shadow-dom-support) — 2026-02-10
+- [Stagehand v3 Changelog](https://www.browserbase.com/changelog/stagehand-v3), Browserbase, 2026
+- [Stagehand Docs / Agent](https://docs.stagehand.dev/v3/basics/agent), accessed 2026-05-01
+- [Stagehand deepLocator](https://docs.stagehand.dev/v3/references/deeplocator), accessed 2026-05-01
+- [Stagehand vs Browser Use vs Playwright (NxCode)](https://www.nxcode.io/resources/news/stagehand-vs-browser-use-vs-playwright-ai-browser-automation-2026), 2026
+- [Stagehand shadow DOM release](https://www.browserbase.com/changelog/stagehand-new-release-feat-shadow-dom-support), 2026-02-10
 
 ### Browser-Use & Skyvern
-- [Browser Use benchmark post](https://browser-use.com/posts/ai-browser-agent-benchmark) — bu-ultra 78%
+- [Browser Use benchmark post](https://browser-use.com/posts/ai-browser-agent-benchmark), bu-ultra 78%
 - [Skyvern 2.0 launch](https://www.skyvern.com/blog/skyvern-2-0-state-of-the-art-web-navigation-with-85-8-on-webvoyager-eval/)
 - [Skyvern Web-Bench](https://blog.skyvern.com/web-bench-a-new-way-to-compare-ai-browser-agents/)
-- [Browser Use vs Stagehand (Skyvern blog)](https://www.skyvern.com/blog/browser-use-vs-stagehand-which-is-better/) — 2026-02
+- [Browser Use vs Stagehand (Skyvern blog)](https://www.skyvern.com/blog/browser-use-vs-stagehand-which-is-better/), 2026-02
 
 ### Leaderboards
-- [Steel.dev AI Browser Agent Leaderboard](https://leaderboard.steel.dev/) — 2026-04
-- [Awesome Agents Web Agent Benchmarks](https://awesomeagents.ai/leaderboards/web-agent-benchmarks-leaderboard/) — 2026-04
+- [Steel.dev AI Browser Agent Leaderboard](https://leaderboard.steel.dev/), 2026-04
+- [Awesome Agents Web Agent Benchmarks](https://awesomeagents.ai/leaderboards/web-agent-benchmarks-leaderboard/), 2026-04
 - [BrowseComp Leaderboard (LLM-Stats)](https://llm-stats.com/benchmarks/browsecomp)
 - [BenchLM WebVoyager](https://benchlm.ai/benchmarks/webVoyager)
 
 ### Playwright
-- [Playwright Locators](https://playwright.dev/docs/locators) — official 2026
+- [Playwright Locators](https://playwright.dev/docs/locators), official 2026
 - [Playwright Best Practices](https://playwright.dev/docs/best-practices)
-- [Playwright ARIA Snapshots](https://playwright.dev/docs/aria-snapshots) — 2026 stable
+- [Playwright ARIA Snapshots](https://playwright.dev/docs/aria-snapshots), 2026 stable
 - [Anti-Patterns in Playwright (Medium)](https://medium.com/@gunashekarr11/anti-patterns-in-playwright-people-dont-realize-they-re-doing-00f84cd7dff0)
-- [GitHub Issue #33547 — slot in shadow DOM](https://github.com/microsoft/playwright/issues/33547)
+- [GitHub Issue #33547, slot in shadow DOM](https://github.com/microsoft/playwright/issues/33547)
 
 ### Anthropic Computer Use
-- [Computer Use Tool Docs (2026-05)](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool) — beta header `computer-use-2025-11-24`
+- [Computer Use Tool Docs (2026-05)](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool), beta header `computer-use-2025-11-24`
 - [Anthropic Pricing 2026](https://platform.claude.com/docs/en/about-claude/pricing)
 - [Claude Opus 4.7 Release](https://www.anthropic.com/news/claude-opus-4-7)
 - [Computer Use 2026 Guide (LaoZhang)](https://blog.laozhang.ai/en/posts/claude-computer-use)
 
 ### Self-healing
-- [Healenium](https://healenium.io/) — weighted LCS + ML
+- [Healenium](https://healenium.io/), weighted LCS + ML
 - [Healenium Docs](https://healenium.io/docs/how_healenium_works)
 - [Healenium Medium overview](https://medium.com/geekculture/healenium-self-healing-library-for-selenium-test-automation-26c2358629c5)
 
@@ -392,11 +392,11 @@ if all_dom_locators_failed():
 - [GAIA Leaderboard (HAL Princeton)](https://hal.cs.princeton.edu/gaia)
 - [BrowseComp-Plus (ACL 2026)](https://github.com/texttron/BrowseComp-Plus)
 - [MM-BrowseComp (arxiv 2508.13186)](https://arxiv.org/html/2508.13186v1)
-- [Bug0 — agent QA failure modes 2026](https://bug0.com/blog/ai-testing-browser-agent-tools-wont-fix-qa-2026)
+- [Bug0, agent QA failure modes 2026](https://bug0.com/blog/ai-testing-browser-agent-tools-wont-fix-qa-2026)
 
 ### Models
 - [DeepSeek V4 Pro Pricing 2026 (DeepInfra)](https://deepinfra.com/blog/deepseek-v4-pro-pricing-guide-2026-providers-cost-analysis)
-- [Artificial Analysis — DeepSeek V4 Pro](https://artificialanalysis.ai/models/deepseek-v4-pro)
+- [Artificial Analysis, DeepSeek V4 Pro](https://artificialanalysis.ai/models/deepseek-v4-pro)
 - [DeepSeek V4 Pro Review (BuildFastWithAI)](https://www.buildfastwithai.com/blogs/deepseek-v4-pro-review-2026)
 - [Reflexion paper (arxiv 2303.11366)](https://arxiv.org/pdf/2303.11366)
 - [HuggingFace 2026 Reflective Agent trends](https://huggingface.co/blog/aufklarer/ai-trends-2026-test-time-reasoning-reflective-agen)

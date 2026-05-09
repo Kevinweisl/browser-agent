@@ -6,7 +6,7 @@ Goal: actionable recipes for 4 distinct failure modes surfaced in eval.
 
 ---
 
-## Problem 1 — Locator returns count > 1, `_has_one` rejects ambiguous matches
+## Problem 1, Locator returns count > 1, `_has_one` rejects ambiguous matches
 
 ### Recommendation
 
@@ -40,7 +40,7 @@ The `visible: true` option was added precisely to avoid `.first()` (`https://kai
 
 A **3-step chained ladder**, all expressed as `Locator` chains so strict mode still applies:
 
-1. `loc.filter({ visible: true })` — kills off-screen / dialog-mode duplicates. Recheck `count()`. If 1, use it.
+1. `loc.filter({ visible: true })`, kills off-screen / dialog-mode duplicates. Recheck `count()`. If 1, use it.
 2. If still >1: `loc.filter({ hasText: planner_hint })` where `planner_hint` is supplied by the Planner LLM (e.g. "Search Wikipedia"). Recheck. If 1, use it.
 3. If still >1: viewport-clip via `bounding_box()` and rank by distance from top-left, OR (last resort) `loc.first()` with a logged warning.
 
@@ -62,13 +62,13 @@ Sources:
 
 ---
 
-## Problem 2 — SEC EDGAR + Berkshire IR block headless Chromium
+## Problem 2, SEC EDGAR + Berkshire IR block headless Chromium
 
 ### Recommendation
 
 For SEC EDGAR, **stop using a browser**. SEC publishes a documented JSON REST API at `data.sec.gov` whose only requirements are a descriptive User-Agent and ≤10 req/s. For Berkshire IR (static HTML, no JS, no CAPTCHA on the public PDFs), use plain `httpx` with a real Chrome UA + Accept-Language; Playwright is overkill and headless Chromium's TLS/CDP fingerprint is what's getting blocked.
 
-### Verbatim — SEC official policy
+### Verbatim, SEC official policy
 
 From `https://www.sec.gov/os/accessing-edgar-data` (cached via secondary sources):
 
@@ -82,7 +82,7 @@ User-Agent format the SEC asks for (`https://dealcharts.org/blog/edgar-scraping-
 
 EdgarTools compliance guide (`https://edgartools.readthedocs.io/en/stable/resources/sec-compliance/`):
 
-> "No more than 10 requests per second" ... "Reasonable total volume per day" ... "avoiding excessive concurrent requests" ... "Run large batches outside 9:30 AM–4:00 PM Eastern Time"
+> "No more than 10 requests per second" ... "Reasonable total volume per day" ... "avoiding excessive concurrent requests" ... "Run large batches outside 9:30 AM-4:00 PM Eastern Time"
 
 Submissions API endpoint (`https://www.sec.gov/search-filings/edgar-application-programming-interfaces`):
 
@@ -90,15 +90,15 @@ Submissions API endpoint (`https://www.sec.gov/search-filings/edgar-application-
 > "Submissions by company and extracted XBRL data are available via RESTful APIs on data.sec.gov, offering JSON formatted data"
 > "data.sec.gov does not support Cross Origin Resource Scripting (CORS)"
 
-### Verbatim — playwright-stealth ceiling in 2026
+### Verbatim, playwright-stealth ceiling in 2026
 
 `https://scrapewise.ai/blogs/playwright-stealth-2026`:
 
 > "these are JS-layer patches. Anti-bot systems have moved up the stack."
 
-> "TLS fingerprint mismatches and HTTP/2 SETTINGS frames—signals that exist before JavaScript executes"
+> "TLS fingerprint mismatches and HTTP/2 SETTINGS frames-signals that exist before JavaScript executes"
 
-> "playwright-stealth v2.x is a valid starting point" for mid-tier targets — but fails against Cloudflare Enterprise, Akamai v4, DataDome.
+> "playwright-stealth v2.x is a valid starting point" for mid-tier targets, but fails against Cloudflare Enterprise, Akamai v4, DataDome.
 
 `https://alterlab.io/blog/playwright-anti-bot-detection-what-actually-works-in-2026`:
 
@@ -108,7 +108,7 @@ Submissions API endpoint (`https://www.sec.gov/search-filings/edgar-application-
 
 > "TLS fingerprinting cannot be fixed from JavaScript. You would need to patch Chromium's TLS stack at the C++ level"
 
-### Verbatim — `--headless=new`
+### Verbatim, `--headless=new`
 
 `https://datadome.co/threat-research/how-new-headless-chrome-the-cdp-signal-are-impacting-bot-detection/` (via search summary, fetch returned 403):
 
@@ -132,10 +132,10 @@ As of Chrome 132, **`--headless=new` is the default**, so the flag is no longer 
 
 **Two-tier source policy** in the agent:
 
-1. **Tier A — structured API path**: if the planner identifies an SEC source, route through `data.sec.gov/submissions/CIK0000320193.json` + `data.sec.gov/api/xbrl/companyfacts/CIK...`. Set User-Agent `KevinWei InterviewAgent (weisl@nlg.csie.ntu.edu.tw)`. Throttle to 9 req/s with token bucket. Browser is never opened. This is what the real production pipelines do — see `edgartools` and `sec-edgar-api`.
-2. **Tier B — headed browser fallback**: for IR sites and pages without an API, launch with `headless=False` (or `headless=new` + `--disable-blink-features=AutomationControlled` as second-best), realistic UA, `playwright-stealth==2.0.2`. Berkshire IR specifically serves static HTML without anti-bot, so this should work; if it doesn't, the page itself is fetchable with `httpx` + Chrome UA.
+1. **Tier A, structured API path**: if the planner identifies an SEC source, route through `data.sec.gov/submissions/CIK0000320193.json` + `data.sec.gov/api/xbrl/companyfacts/CIK...`. Set User-Agent `KevinWei InterviewAgent (weisl@nlg.csie.ntu.edu.tw)`. Throttle to 9 req/s with token bucket. Browser is never opened. This is what the real production pipelines do, see `edgartools` and `sec-edgar-api`.
+2. **Tier B, headed browser fallback**: for IR sites and pages without an API, launch with `headless=False` (or `headless=new` + `--disable-blink-features=AutomationControlled` as second-best), realistic UA, `playwright-stealth==2.0.2`. Berkshire IR specifically serves static HTML without anti-bot, so this should work; if it doesn't, the page itself is fetchable with `httpx` + Chrome UA.
 
-For Tier B, do NOT use `wait_until="networkidle"` — modern SPAs never go idle. Use `wait_until="domcontentloaded"` plus an explicit `expect(locator).to_be_visible()` on a content selector.
+For Tier B, do NOT use `wait_until="networkidle"`, modern SPAs never go idle. Use `wait_until="domcontentloaded"` plus an explicit `expect(locator).to_be_visible()` on a content selector.
 
 Sources:
 - https://www.sec.gov/os/accessing-edgar-data
@@ -151,21 +151,21 @@ Sources:
 
 ---
 
-## Problem 3 — K=2 ensemble worse than K=3 (1.0 → 0.78)
+## Problem 3, K=2 ensemble worse than K=3 (1.0 → 0.78)
 
 ### Recommendation
 
-K=2 majority-vote is mathematically degenerate: a 1–1 split has no winner, and a 2–0 split lets shared training-data biases compound. Production pattern in 2026 is **agreement-gated K=2 with a judge fallback**: emit the answer only when both members agree AND both report self-confidence ≥ 0.9; otherwise route to a third "judge" model (cheap, separate family) to break the tie. If you can't afford a judge, fall back to K=1 with self-consistency (3 temperature-shuffled samples on the strongest model).
+K=2 majority-vote is mathematically degenerate: a 1-1 split has no winner, and a 2-0 split lets shared training-data biases compound. Production pattern in 2026 is **agreement-gated K=2 with a judge fallback**: emit the answer only when both members agree AND both report self-confidence ≥ 0.9; otherwise route to a third "judge" model (cheap, separate family) to break the tie. If you can't afford a judge, fall back to K=1 with self-consistency (3 temperature-shuffled samples on the strongest model).
 
-### Verbatim — measured K-curve
+### Verbatim, measured K-curve
 
 `https://arxiv.org/html/2511.15714v1` ("Majority Rules: LLM Ensemble..."):
 
 > Single model: 0.55 -> 2 LLMs: 0.73 -> 3 LLMs: 0.76 -> 10 LLMs: 0.92
 
-The marginal jump from K=2 to K=3 is small in F1, but the failure mode is sharp: K=2 has no tiebreak, K=3 always has one. Your observed 1.0 → 0.78 drop is consistent with both members agreeing on the wrong override — exactly what the "Majority Rules" paper warns about with low diversity.
+The marginal jump from K=2 to K=3 is small in F1, but the failure mode is sharp: K=2 has no tiebreak, K=3 always has one. Your observed 1.0 → 0.78 drop is consistent with both members agreeing on the wrong override, exactly what the "Majority Rules" paper warns about with low diversity.
 
-### Verbatim — judge tie-breakers
+### Verbatim, judge tie-breakers
 
 `https://arxiv.org/html/2412.05579v2` (LLM-as-Judge survey, summarized):
 
@@ -193,9 +193,9 @@ The marginal jump from K=2 to K=3 is small in F1, but the failure mode is sharp:
 **Layered fallback**, decided at runtime:
 
 1. **K=3 cross-family preferred**: when DeepSeek endpoint is healthy, run all three.
-2. **Agreement-gated K=2**: when DeepSeek is down — Nemotron + Mistral both must (a) agree on the label AND (b) self-report confidence ≥ 0.9 ("how sure are you, 0–1?" appended to the schema). If gate passes, emit. If gate fails, fall through.
-3. **K=2 + judge**: if (2) fails, call a third judge model (cheap — Nemotron at high temperature with a different system prompt counts) with both candidate answers and "or neither" as an explicit option. Three-option judges reduce position bias. (`arxiv.org/html/2412.05579v2`)
-4. **Last resort — K=1 self-consistency**: 3 temperature-shuffled samples on the strongest available model; majority of 3.
+2. **Agreement-gated K=2**: when DeepSeek is down, Nemotron + Mistral both must (a) agree on the label AND (b) self-report confidence ≥ 0.9 ("how sure are you, 0-1?" appended to the schema). If gate passes, emit. If gate fails, fall through.
+3. **K=2 + judge**: if (2) fails, call a third judge model (cheap, Nemotron at high temperature with a different system prompt counts) with both candidate answers and "or neither" as an explicit option. Three-option judges reduce position bias. (`arxiv.org/html/2412.05579v2`)
+4. **Last resort, K=1 self-consistency**: 3 temperature-shuffled samples on the strongest available model; majority of 3.
 
 This recovers coverage without the silent K=2 confidence trap. Critical instrumentation: log every gate transition, so you can measure whether step (2) actually shrinks the disagreement set vs blind K=2.
 
@@ -210,13 +210,13 @@ Sources:
 
 ---
 
-## Problem 4 — `asyncio.Semaphore` cached at module level breaks across `asyncio.run()` calls
+## Problem 4, `asyncio.Semaphore` cached at module level breaks across `asyncio.run()` calls
 
 ### Recommendation
 
 Your `(id(loop), name)` key works as a band-aid, but the canonical 2026 fix is **don't call `asyncio.run()` more than once**. The Python docs are explicit about this. Promote the per-filing pipeline to a single long-lived loop using `asyncio.Runner` (3.11+), or move semaphore creation **inside** the coroutine so it always binds to the running loop. The id-based cache has a real GC-collision risk; avoid it.
 
-### Verbatim — Python docs (`https://docs.python.org/3/library/asyncio-runner.html`)
+### Verbatim, Python docs (`https://docs.python.org/3/library/asyncio-runner.html`)
 
 > "This function should be used as a main entry point for asyncio programs, and **should ideally only be called once.**"
 
@@ -226,9 +226,9 @@ Your `(id(loop), name)` key works as a band-aid, but the canonical 2026 fix is *
 
 > "Changed in version 3.10: Removed the loop parameter."
 
-(Implication: Semaphore now implicitly binds to the running loop at first use. Module-level construction binds to whichever loop is running at import time — usually none — and then breaks on first `acquire()` after a fresh `asyncio.run()`.)
+(Implication: Semaphore now implicitly binds to the running loop at first use. Module-level construction binds to whichever loop is running at import time, usually none, and then breaks on first `acquire()` after a fresh `asyncio.run()`.)
 
-### Verbatim — community guidance
+### Verbatim, community guidance
 
 From Sanic issue #1388 and ComfyUI #3232 (`https://github.com/huge-success/sanic/issues/1388`, summarized):
 
@@ -270,7 +270,7 @@ import weakref
 _PROVIDER_LOCKS: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, dict[str, asyncio.Semaphore]] = weakref.WeakKeyDictionary()
 ```
 
-Re: `asyncio.TaskGroup` (3.11+) — orthogonal. TaskGroup replaces `gather` for structured concurrency / cleaner exception propagation. It does **not** solve the cross-loop semaphore problem; that's a loop-lifetime issue, not a task-management issue. Adopt it inside `_async_main` for the gather call, but it's not the fix here.
+Re: `asyncio.TaskGroup` (3.11+), orthogonal. TaskGroup replaces `gather` for structured concurrency / cleaner exception propagation. It does **not** solve the cross-loop semaphore problem; that's a loop-lifetime issue, not a task-management issue. Adopt it inside `_async_main` for the gather call, but it's not the fix here.
 
 Sources:
 - https://docs.python.org/3/library/asyncio-runner.html
