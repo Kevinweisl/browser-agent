@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -61,11 +62,29 @@ async def _browser_context(*, headless: bool = True):
         await pw.stop()
 
 
-async def run_task(task_input: TaskInput) -> TaskResult:
+async def run_task(
+    task_input: TaskInput,
+    *,
+    event_callback: Callable[[TrajectoryEvent], None] | None = None,
+) -> TaskResult:
+    """Run an NL task end-to-end. If `event_callback` is supplied, it is
+    called once per trajectory event the moment that event is appended,
+    so the demo UI can stream progress instead of waiting for the full
+    return. The callback is sync and best-effort: any exception inside
+    is logged and swallowed so the core loop never breaks because of UI
+    wiring."""
     t0 = time.perf_counter()
     deadline_s = task_input.max_seconds
     trajectory: list[TrajectoryEvent] = []
     fail_reason = "completed"
+
+    def _emit(ev: TrajectoryEvent) -> None:
+        if event_callback is None:
+            return
+        try:
+            event_callback(ev)
+        except Exception:  # noqa: BLE001
+            log.exception("event_callback raised; ignoring")
 
     async with _browser_context(headless=True) as page:
         actor = StepActor(page, LocatorResolver())
@@ -158,7 +177,9 @@ async def run_task(task_input: TaskInput) -> TaskResult:
                         silent_failure_signals=signals, confidence=0.0,
                     )
 
-            trajectory.append(TrajectoryEvent(step=step, result=result, validation=validation))
+            ev = TrajectoryEvent(step=step, result=result, validation=validation)
+            trajectory.append(ev)
+            _emit(ev)
             steps_executed += 1
 
             # Capture last extract content

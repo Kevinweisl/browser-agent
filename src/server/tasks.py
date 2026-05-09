@@ -47,9 +47,9 @@ class TaskEntry:
     task_input: dict[str, Any]
     started_at: float
     finished_at: float | None = None
-    # trajectory_so_far stays empty in this build — see note in `_run` below.
-    # Kept on the dataclass so the polling endpoint can render whatever the
-    # final TaskResult contains once status flips to "done".
+    # Filled live from handlers.run_task event_callback as each step finishes,
+    # so the polling endpoint can show progressive trajectory updates rather
+    # than spinning on a blank panel for 1-3 minutes.
     trajectory_so_far: list[dict] = field(default_factory=list)
     result: dict | None = None
     error: str | None = None
@@ -93,30 +93,26 @@ def submit(payload: dict[str, Any]) -> TaskEntry:
 
 
 async def _run(entry: TaskEntry, task_input: TaskInput) -> None:
-    """Background coroutine: acquire the semaphore, run the task, fill in entry."""
+    """Background coroutine: acquire the semaphore, run the task, fill in entry.
+
+    `asyncio.wait_for` enforces our hard cap on top of run_task's internal
+    deadline so a wedged Playwright still terminates the entry."""
     async with _RUN_LOCK:
         entry.status = "running"
         entry.started_at = time.time()
+
+        def _on_event(ev) -> None:
+            entry.trajectory_so_far.append(ev.model_dump(mode="json"))
+
         try:
-            # Note on trajectory_so_far: handlers.run_task does not currently
-            # expose an event hook — adding one is a non-trivial cross-cutting
-            # change (would touch handlers.py, actor.py, validator.py to thread
-            # an `event_hook: Callable | None` through). For the demo we
-            # accept a "spinner until done, then full trajectory" UX rather
-            # than risk regressions to the eval-verified core. If the demo
-            # ends up needing live progress, the right place to add the hook
-            # is in handlers.run_task right after `trajectory.append(...)`.
-            #
-            # asyncio.wait_for enforces our hard cap on top of the run_task
-            # internal deadline, in case run_task itself is wedged in
-            # Playwright before reaching its loop deadline check.
             result = await asyncio.wait_for(
-                run_task(task_input),
+                run_task(task_input, event_callback=_on_event),
                 timeout=_MAX_TASK_SECONDS + 30,
             )
             entry.result = result.model_dump(mode="json")
-            # Populate trajectory_so_far at the end so the UI's "in-progress"
-            # rendering path also works for the terminal state.
+            # Replace whatever the streaming callback accumulated with the
+            # canonical final trajectory (covers any rare divergence and
+            # captures the post-final return).
             entry.trajectory_so_far = entry.result.get("trajectory", [])
             entry.status = "done"
         except TimeoutError:

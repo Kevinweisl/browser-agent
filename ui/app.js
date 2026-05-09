@@ -64,10 +64,35 @@ const els = {
   failBlock: $("fail-block"),
 };
 
-// ── Status badge ──────────────────────────────────────────────────────────
+// ── Status badge + elapsed-time ticker ────────────────────────────────────
+let elapsedTimer = null;
+let elapsedStart = 0;
+
 function setStatus(state, text) {
   els.statusBadge.className = `badge badge-${state}`;
   els.statusBadge.textContent = text || state;
+  if (state === "running") {
+    elapsedStart = Date.now();
+    if (elapsedTimer) clearInterval(elapsedTimer);
+    elapsedTimer = setInterval(updateRunningMessage, 1000);
+    updateRunningMessage();
+  } else {
+    if (elapsedTimer) {
+      clearInterval(elapsedTimer);
+      elapsedTimer = null;
+    }
+  }
+}
+
+function updateRunningMessage() {
+  if (!activeTaskId || !elapsedStart) return;
+  const seconds = Math.floor((Date.now() - elapsedStart) / 1000);
+  const stepCount = els.trajectoryBody.children.length;
+  const stepText = stepCount > 0
+    ? `${stepCount} step${stepCount === 1 ? "" : "s"} so far`
+    : "planner working…";
+  els.runMsg.textContent = `running · ${seconds}s elapsed · ${stepText}`;
+  els.runMsg.className = "run-msg";
 }
 
 // ── Eval banner ───────────────────────────────────────────────────────────
@@ -133,7 +158,6 @@ els.runBtn.addEventListener("click", async () => {
   els.runBtn.disabled = true;
   els.runMsg.textContent = "submitting…";
   els.runMsg.className = "run-msg";
-  setStatus("running", "running");
 
   try {
     const r = await fetch("/api/run", {
@@ -147,7 +171,7 @@ els.runBtn.addEventListener("click", async () => {
     }
     const data = await r.json();
     activeTaskId = data.task_id;
-    els.runMsg.textContent = `task_id: ${activeTaskId}`;
+    setStatus("running", "running");
     pollLoop(activeTaskId);
   } catch (e) {
     els.runMsg.textContent = `error: ${e.message}`;
@@ -188,11 +212,12 @@ async function pollLoop(taskId) {
       return;
     }
 
-    // Render trajectory_so_far if backend populates it (currently empty
-    // until terminal state — see server/tasks.py for rationale). The render
-    // is idempotent, so calling it on an empty list is a no-op.
+    // Stream trajectory: backend appends to trajectory_so_far via
+    // handlers.run_task event_callback as each step finishes. Render is
+    // idempotent — re-running on the cumulative list each poll is fine.
     if (status.trajectory_so_far && status.trajectory_so_far.length > 0) {
       renderTrajectory(status.trajectory_so_far);
+      updateRunningMessage();  // refresh "N steps so far" count immediately
     }
 
     if (status.status === "done") {

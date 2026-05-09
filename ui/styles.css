@@ -208,9 +208,33 @@ textarea:focus, input:focus {
   letter-spacing: 0.04em;
 }
 .badge-idle { background: #eaeef2; color: var(--muted); }
-.badge-running { background: var(--accent-soft); color: var(--accent); }
+.badge-running {
+  background: var(--accent-soft);
+  color: var(--accent);
+  animation: badge-pulse 1.4s ease-in-out infinite;
+}
+.badge-running::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: badge-dot-pulse 1.4s ease-in-out infinite;
+  vertical-align: middle;
+}
 .badge-done { background: var(--good-soft); color: var(--good); }
 .badge-error { background: var(--bad-soft); color: var(--bad); }
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+@keyframes badge-dot-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.4); }
+}
 
 /* ── Plan list ──────────────────────────────────────────────── */
 .plan-list {
