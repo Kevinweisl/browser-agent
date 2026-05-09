@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from workers.browser.handlers import run_task
-from workers.browser.schema import TaskInput
+from workers.browser.schema import TaskInput, TrajectoryEvent
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +53,10 @@ class TaskEntry:
     trajectory_so_far: list[dict] = field(default_factory=list)
     result: dict | None = None
     error: str | None = None
+
+    def append_event(self, ev: TrajectoryEvent) -> None:
+        """Drain a streamed trajectory event into the polling-visible list."""
+        self.trajectory_so_far.append(ev.model_dump(mode="json"))
 
 
 _REGISTRY: dict[str, TaskEntry] = {}
@@ -100,13 +104,9 @@ async def _run(entry: TaskEntry, task_input: TaskInput) -> None:
     async with _RUN_LOCK:
         entry.status = "running"
         entry.started_at = time.time()
-
-        def _on_event(ev) -> None:
-            entry.trajectory_so_far.append(ev.model_dump(mode="json"))
-
         try:
             result = await asyncio.wait_for(
-                run_task(task_input, event_callback=_on_event),
+                run_task(task_input, event_callback=entry.append_event),
                 timeout=_MAX_TASK_SECONDS + 30,
             )
             entry.result = result.model_dump(mode="json")

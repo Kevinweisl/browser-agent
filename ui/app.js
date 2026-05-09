@@ -67,6 +67,9 @@ const els = {
 // ── Status badge + elapsed-time ticker ────────────────────────────────────
 let elapsedTimer = null;
 let elapsedStart = 0;
+// Track how many trajectory rows we've already painted so streaming polls can
+// append-only instead of rebuilding the whole table each cycle.
+let lastRenderedTrajectoryLength = 0;
 
 function setStatus(state, text) {
   els.statusBadge.className = `badge badge-${state}`;
@@ -81,6 +84,10 @@ function setStatus(state, text) {
       clearInterval(elapsedTimer);
       elapsedTimer = null;
     }
+    // Reset so any in-flight `updateRunningMessage` (e.g. from a stale
+    // pollLoop tick that lands after we transition to done/error) early-exits
+    // via its `!elapsedStart` guard rather than overwriting the final message.
+    elapsedStart = 0;
   }
 }
 
@@ -188,6 +195,7 @@ function resetPanels() {
   els.trajectoryCard.hidden = true;
   els.trajectoryBody.innerHTML = "";
   els.trajectorySummary.textContent = "";
+  lastRenderedTrajectoryLength = 0;
   els.resultCard.hidden = true;
   els.resultStats.innerHTML = "";
   els.resultExtracted.textContent = "—";
@@ -213,11 +221,10 @@ async function pollLoop(taskId) {
     }
 
     // Stream trajectory: backend appends to trajectory_so_far via
-    // handlers.run_task event_callback as each step finishes. Render is
-    // idempotent — re-running on the cumulative list each poll is fine.
+    // handlers.run_task event_callback as each step finishes. renderTrajectory
+    // is incremental — it only paints rows past lastRenderedTrajectoryLength.
     if (status.trajectory_so_far && status.trajectory_so_far.length > 0) {
       renderTrajectory(status.trajectory_so_far);
-      updateRunningMessage();  // refresh "N steps so far" count immediately
     }
 
     if (status.status === "done") {
@@ -306,101 +313,99 @@ function renderResult(result) {
 }
 
 // ── Render: trajectory rows ───────────────────────────────────────────────
+// Trajectory is append-only on the server (handlers.run_task only appends to
+// `trajectory` — replans don't rewrite history), so the UI can append-only too.
+// We track lastRenderedTrajectoryLength to avoid the O(N²) thrash of clearing
+// and rebuilding the whole table every poll.
 function renderTrajectory(events) {
   els.trajectoryCard.hidden = false;
-  els.trajectoryBody.innerHTML = "";
+
+  // Defensive: if the list shrank (e.g. a new task started before resetPanels
+  // ran), drop everything and rebuild.
+  if (events.length < lastRenderedTrajectoryLength) {
+    els.trajectoryBody.innerHTML = "";
+    lastRenderedTrajectoryLength = 0;
+  }
+  for (let i = lastRenderedTrajectoryLength; i < events.length; i++) {
+    els.trajectoryBody.appendChild(buildTrajectoryRow(events[i], i));
+  }
+  lastRenderedTrajectoryLength = events.length;
 
   let replanCount = 0;
   let abortCount = 0;
-
-  events.forEach((event, i) => {
-    const { step, result, validation } = event;
-    const tr = document.createElement("tr");
-
-    const decision = (validation && validation.decision) || "pass";
-    if (decision === "replan") {
-      tr.classList.add("row-replan");
-      replanCount += 1;
-    }
-    if (decision === "abort") {
-      tr.classList.add("row-abort");
-      abortCount += 1;
-    }
-
-    // # column (1-indexed, matches Step.step_index for the eye)
-    const tdNum = td(String(i + 1));
-
-    // action
-    const tdAction = td(escapeHTML(step.action_type));
-
-    // intent / url for navigate, value for type
-    let intentText = step.target_intent || "";
-    if (step.action_type === "navigate" && step.url) {
-      intentText = step.url;
-    } else if (step.action_type === "type" && step.value) {
-      intentText = `${intentText} ← ${step.value}`;
-    } else if (step.action_type === "extract" && step.extract_query) {
-      intentText = `${intentText} ← q: ${step.extract_query}`;
-    }
-    const tdIntent = td(escapeHTML(intentText));
-    tdIntent.className = "col-intent";
-
-    // tier
-    const tier = result.locator_tier || "—";
-    let tierClass = "tier";
-    if (tier === "cached" && result.cache_hit) tierClass = "tier tier-cached";
-    const tdTier = document.createElement("td");
-    tdTier.innerHTML = `<span class="${tierClass}">${escapeHTML(tier)}</span>`;
-
-    // selector
-    const tdSelector = td(result.selector ? escapeHTML(result.selector) : "—");
-    tdSelector.className = "col-selector";
-
-    // flags: cache_hit / healed / success
-    const tdFlags = document.createElement("td");
-    const chips = [];
-    if (result.cache_hit) chips.push(`<span class="flag-chip flag-good">cache_hit</span>`);
-    // healed_selector_count is task-level; we surface it as "healed" only on
-    // the row that wrote the cache (best-effort: cache_hit=false but tier=cached
-    // would indicate the cache existed but failed — the resolver re-fingerprints
-    // and rewrites). For the demo we show a "healed" pill any time tier ===
-    // "cached" but cache_hit === false.
-    if (result.locator_tier === "cached" && !result.cache_hit) {
-      chips.push(`<span class="flag-chip flag-warn">healed</span>`);
-    }
-    if (!result.success) chips.push(`<span class="flag-chip flag-bad">step_fail</span>`);
-    tdFlags.innerHTML = chips.join(" ") || "—";
-
-    // validator decision
-    const tdValidator = document.createElement("td");
-    const conf = validation && typeof validation.confidence === "number"
-      ? ` (${validation.confidence.toFixed(2)})` : "";
-    tdValidator.innerHTML = `<span class="validator-${decision}">${escapeHTML(decision.toUpperCase())}</span>${conf}`;
-    tdValidator.title = (validation && validation.reason) || "";
-
-    // signals — silent-failure chips
-    const tdSignals = document.createElement("td");
-    const signals = (validation && validation.silent_failure_signals) || [];
-    if (signals.length === 0) {
-      tdSignals.textContent = "—";
-    } else {
-      tdSignals.innerHTML = `<div class="signals">${signals
-        .map((s) => `<span class="flag-chip ${signalClass(s)}">${escapeHTML(s)}</span>`)
-        .join("")}</div>`;
-    }
-
-    tr.append(tdNum, tdAction, tdIntent, tdTier, tdSelector, tdFlags, tdValidator, tdSignals);
-    els.trajectoryBody.appendChild(tr);
-  });
-
-  const summary = [
+  for (const event of events) {
+    const decision = (event.validation && event.validation.decision) || "pass";
+    if (decision === "replan") replanCount += 1;
+    if (decision === "abort") abortCount += 1;
+  }
+  els.trajectorySummary.textContent = [
     `${events.length} step${events.length === 1 ? "" : "s"}`,
     replanCount ? `${replanCount} replan${replanCount === 1 ? "" : "s"}` : null,
     abortCount ? `${abortCount} abort${abortCount === 1 ? "" : "s"}` : null,
   ]
     .filter(Boolean)
     .join(" · ");
-  els.trajectorySummary.textContent = summary;
+}
+
+function buildTrajectoryRow(event, i) {
+  const { step, result, validation } = event;
+  const tr = document.createElement("tr");
+
+  const decision = (validation && validation.decision) || "pass";
+  if (decision === "replan") tr.classList.add("row-replan");
+  if (decision === "abort") tr.classList.add("row-abort");
+
+  const tdNum = td(String(i + 1));
+  const tdAction = td(escapeHTML(step.action_type));
+
+  let intentText = step.target_intent || "";
+  if (step.action_type === "navigate" && step.url) {
+    intentText = step.url;
+  } else if (step.action_type === "type" && step.value) {
+    intentText = `${intentText} ← ${step.value}`;
+  } else if (step.action_type === "extract" && step.extract_query) {
+    intentText = `${intentText} ← q: ${step.extract_query}`;
+  }
+  const tdIntent = td(escapeHTML(intentText));
+  tdIntent.className = "col-intent";
+
+  const tier = result.locator_tier || "—";
+  const tierClass = (tier === "cached" && result.cache_hit) ? "tier tier-cached" : "tier";
+  const tdTier = document.createElement("td");
+  tdTier.innerHTML = `<span class="${tierClass}">${escapeHTML(tier)}</span>`;
+
+  const tdSelector = td(result.selector ? escapeHTML(result.selector) : "—");
+  tdSelector.className = "col-selector";
+
+  // tier=cached + cache_hit=false ⇒ resolver fell into the heal branch (the
+  // stored selector still resolved, just had to re-fingerprint and rewrite).
+  const tdFlags = document.createElement("td");
+  const chips = [];
+  if (result.cache_hit) chips.push(`<span class="flag-chip flag-good">cache_hit</span>`);
+  if (result.locator_tier === "cached" && !result.cache_hit) {
+    chips.push(`<span class="flag-chip flag-warn">healed</span>`);
+  }
+  if (!result.success) chips.push(`<span class="flag-chip flag-bad">step_fail</span>`);
+  tdFlags.innerHTML = chips.join(" ") || "—";
+
+  const tdValidator = document.createElement("td");
+  const conf = validation && typeof validation.confidence === "number"
+    ? ` (${validation.confidence.toFixed(2)})` : "";
+  tdValidator.innerHTML = `<span class="validator-${decision}">${escapeHTML(decision.toUpperCase())}</span>${conf}`;
+  tdValidator.title = (validation && validation.reason) || "";
+
+  const tdSignals = document.createElement("td");
+  const signals = (validation && validation.silent_failure_signals) || [];
+  if (signals.length === 0) {
+    tdSignals.textContent = "—";
+  } else {
+    tdSignals.innerHTML = `<div class="signals">${signals
+      .map((s) => `<span class="flag-chip ${signalClass(s)}">${escapeHTML(s)}</span>`)
+      .join("")}</div>`;
+  }
+
+  tr.append(tdNum, tdAction, tdIntent, tdTier, tdSelector, tdFlags, tdValidator, tdSignals);
+  return tr;
 }
 
 // "good" signal: url changed after navigate → as expected.
