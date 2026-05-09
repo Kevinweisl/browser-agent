@@ -53,7 +53,6 @@ class TaskEntry:
     trajectory_so_far: list[dict] = field(default_factory=list)
     result: dict | None = None
     error: str | None = None
-    queued_position: int = 0  # informational; 0 = currently running
 
 
 _REGISTRY: dict[str, TaskEntry] = {}

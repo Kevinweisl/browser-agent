@@ -18,7 +18,6 @@ from .locator_ladder import LocatorResolver
 from .planner import plan_task, replan
 from .schema import (
     ActionType,
-    PageSnapshot,
     StepResult,
     StepValidation,
     TaskInput,
@@ -62,19 +61,6 @@ async def _browser_context(*, headless: bool = True):
         await pw.stop()
 
 
-async def _validate_negative_oracle(post: PageSnapshot, oracle: dict) -> list[str]:
-    """Apply the global per-task oracle (separate from per-step success_criteria)."""
-    violations: list[str] = []
-    text_lower = post.text_excerpt.lower()
-    for must in oracle.get("must_appear_on_final_page", []):
-        if must.lower() not in text_lower:
-            violations.append(f"final-page missing must_appear: {must!r}")
-    for must_not in oracle.get("must_not_appear", []):
-        if must_not.lower() in text_lower:
-            violations.append(f"final-page present must_not_appear: {must_not!r}")
-    return violations
-
-
 async def run_task(task_input: TaskInput) -> TaskResult:
     t0 = time.perf_counter()
     deadline_s = task_input.max_seconds
@@ -86,7 +72,7 @@ async def run_task(task_input: TaskInput) -> TaskResult:
 
         # ─── Plan ────────────────────────────────────────────────────────────
         try:
-            steps, oracle_dict = await plan_task(
+            steps, _ = await plan_task(
                 task_input.task,
                 max_steps=task_input.max_steps,
                 starting_url=task_input.starting_url,

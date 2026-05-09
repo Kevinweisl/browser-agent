@@ -12,13 +12,15 @@ The Actor's job is "make the action happen, faithfully record what changed".
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 import os
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 from . import selector_cache as cache
-from .locator_ladder import LocatorResolver
+from .locator_ladder import LocatorResolver, aria_fingerprint_of
 from .schema import (
     ActionType,
     PageSnapshot,
@@ -48,48 +50,36 @@ log = logging.getLogger(__name__)
 # ── PageSnapshot capture ────────────────────────────────────────────────────
 
 async def snapshot(page: Page) -> PageSnapshot:
-    """Capture a small fingerprint of the current page state."""
-    url = page.url
-    title = await page.title()
-    html = await page.content()
-    dom_hash = dom_hash_string(html)
-    aria = ""
-    try:
-        aria = await page.locator("body").aria_snapshot()
-    except Exception as exc:  # noqa: BLE001
-        log.debug("aria_snapshot failed: %s", exc)
-    text = ""
-    import contextlib
-    with contextlib.suppress(Exception):
-        text = await page.locator("body").inner_text(timeout=2000)
+    """Capture a small fingerprint of the current page state.
+
+    The four CDP round-trips (title, html, aria, text) are independent;
+    running them sequentially adds ~80–200 ms to every step's pre+post.
+    `gather` parallelises them to ~max(individual). Errors on aria / text
+    are tolerated (best-effort) and surface as empty strings.
+    """
+    async def _safe_aria() -> str:
+        try:
+            return await page.locator("body").aria_snapshot()
+        except Exception as exc:  # noqa: BLE001
+            log.debug("aria_snapshot failed: %s", exc)
+            return ""
+
+    async def _safe_text() -> str:
+        with contextlib.suppress(Exception):
+            return await page.locator("body").inner_text(timeout=2000)
+        return ""
+
+    title, html, aria, text = await asyncio.gather(
+        page.title(), page.content(), _safe_aria(), _safe_text(),
+    )
     # text_excerpt cap intentionally generous — modern API JSON responses
     # (e.g. SEC EFTS search returns 315 hits) easily blow past 5K. The oracle
     # + extract step both consume this, so truncation hurts both.
     return PageSnapshot(
-        url=url, title=title, dom_hash=dom_hash,
+        url=page.url, title=title, dom_hash=dom_hash_string(html),
         aria_snapshot=aria[:8000],
         text_excerpt=text[:20000],
     )
-
-
-# ── Aria-fingerprint extraction (cache value extra) ─────────────────────────
-
-async def _aria_fingerprint(locator) -> dict | None:
-    """Extract a small bag of attributes used by Healenium-style heal logic.
-
-    On any failure, return None — fingerprint is best-effort.
-    """
-    try:
-        return {
-            "role": await locator.get_attribute("role"),
-            "aria_label": await locator.get_attribute("aria-label"),
-            "id": await locator.get_attribute("id"),
-            "data_testid": await locator.get_attribute("data-testid"),
-            "tag": (await locator.evaluate("el => el.tagName")).lower() if locator else None,
-            "text": (await locator.text_content() or "").strip()[:120],
-        }
-    except Exception:  # noqa: BLE001
-        return None
 
 
 # ── Step execution ──────────────────────────────────────────────────────────
@@ -231,21 +221,8 @@ class StepActor:
                               error=f"wait_for failed: {exc}", pre=pre, post=post,
                               locator_tier=resolution.tier if resolution else None,
                               selector=resolution.selector if resolution else None)
-        # Treat a successful wait_for as a real "the cached selector still
-        # works" event — record heal + refresh dom_hash so future lookups
-        # short-circuit. We deliberately do NOT upsert when this was just a
-        # cheap dom_hash-equal hit (row already current).
         if resolution is not None and resolution.healed:
-            self.cache_heals += 1
-            try:
-                await cache.record_heal(
-                    url_to_template(pre.url),
-                    step.target_intent,
-                    resolution.healing_diff or "fingerprint-matched",
-                )
-                await self._update_cache(step, resolution, pre.dom_hash, pre.url)
-            except Exception as exc:  # noqa: BLE001
-                log.warning("selector_cache heal-record (wait_for) failed: %s", exc)
+            await self._persist_heal(step, resolution, pre, label="wait_for")
         post = await snapshot(self.page)
         return StepResult(step_index=step.step_index, success=True, pre=pre, post=post,
                           locator_tier=resolution.tier if resolution else None,
@@ -279,11 +256,10 @@ class StepActor:
 
         post = await snapshot(self.page)
 
-        # On success, persist to cache. Three cases:
+        # Persist to cache. Three cases:
         #   1. ladder resolution (cache_hit=False)        → upsert from scratch
-        #   2. cheap cache hit (cache_hit, not healed)    → row is current, just bump counter
+        #   2. cheap cache hit (cache_hit, not healed)    → row already current, bump counter
         #   3. healed cache hit (cache_hit AND healed)    → record_heal + refresh dom_hash
-        #      so the next visit takes the cheap path
         if not resolution.cache_hit:
             try:
                 await self._update_cache(step, resolution, pre.dom_hash, pre.url)
@@ -292,19 +268,7 @@ class StepActor:
                 log.warning("selector_cache write failed: %s", exc)
         elif resolution.healed:
             self.cache_hits += 1
-            self.cache_heals += 1
-            try:
-                await cache.record_heal(
-                    url_to_template(pre.url),
-                    step.target_intent,
-                    resolution.healing_diff or "fingerprint-matched",
-                )
-                # Refresh dom_hash + fingerprint so the next lookup against
-                # this template hits the cheap dom_hash-equal path again
-                # rather than re-running the heal.
-                await self._update_cache(step, resolution, pre.dom_hash, pre.url)
-            except Exception as exc:  # noqa: BLE001
-                log.warning("selector_cache heal-record failed: %s", exc)
+            await self._persist_heal(step, resolution, pre, label="element_action")
         else:
             self.cache_hits += 1
 
@@ -332,13 +296,28 @@ class StepActor:
             cache_record=rec,
         )
 
+    async def _persist_heal(self, step: Step, resolution,
+                            pre: PageSnapshot, *, label: str) -> None:
+        """Audit the heal and refresh dom_hash so the next lookup takes
+        the cheap dom_hash-equal path instead of re-running the heal."""
+        self.cache_heals += 1
+        try:
+            await cache.record_heal(
+                url_to_template(pre.url),
+                step.target_intent,
+                resolution.healing_diff or "fingerprint-matched",
+            )
+            await self._update_cache(step, resolution, pre.dom_hash, pre.url)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("selector_cache heal-record (%s) failed: %s", label, exc)
+
     async def _update_cache(self, step: Step, resolution, pre_dom_hash: str, page_url: str):
         # Extract the strategy from the serialized selector
         if "=" in resolution.selector:
             strategy, _ = resolution.selector.split("=", 1)
         else:
             strategy = resolution.tier.value
-        aria_fp = await _aria_fingerprint(resolution.locator)
+        aria_fp = await aria_fingerprint_of(resolution.locator)
         rec = CacheRecord(
             page_url_template=url_to_template(page_url),
             action_intent=step.target_intent,
