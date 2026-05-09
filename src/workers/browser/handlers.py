@@ -26,7 +26,7 @@ from .schema import (
     TrajectoryEvent,
     ValidatorDecision,
 )
-from .silent_failure import collect_signals, negative_oracle_violations
+from .silent_failure import collect_signals, is_content_failed, negative_oracle_violations
 from .validator import validate_step
 
 # Action types where the cheap signals + step.success alone are sufficient —
@@ -135,12 +135,25 @@ async def run_task(task_input: TaskInput) -> TaskResult:
                 oracle_violations = negative_oracle_violations(step, result.post)
 
             # Validator dispatch:
+            #  - Layer 0 page-content failure (Wikipedia 404 / "page not found"
+            #    / soft-block markers): short-circuit to REPLAN regardless of
+            #    action type. The page itself declares broken — no value in
+            #    asking an LLM, the answer is fixed.
             #  - Passive actions (extract / screenshot / wait_for): cheap-signal
             #    only; no LLM call. Pass on result.success; per-step
             #    success_criteria is too strict for passive ops, the global
             #    negative_oracle on the final page is the right check.
             #  - Mutating actions: LLM K=N vote on top of cheap signals.
-            if step.action_type in _PASSIVE_ACTIONS:
+            if is_content_failed(signals):
+                content_markers = [s.split(":", 1)[1] for s in signals
+                                   if s.startswith("page_content_failed:")]
+                validation = StepValidation(
+                    decision=ValidatorDecision.REPLAN,
+                    reason=("page-content failure detected; short-circuit REPLAN: "
+                            + ", ".join(content_markers)),
+                    silent_failure_signals=signals, confidence=1.0,
+                )
+            elif step.action_type in _PASSIVE_ACTIONS:
                 validation = StepValidation(
                     decision=ValidatorDecision.PASS if result.success else ValidatorDecision.REPLAN,
                     reason=("passive action succeeded; validator short-circuit"

@@ -1,0 +1,191 @@
+{
+  "rows": [
+    {
+      "task_id": "edge-001",
+      "pack": "edge_case",
+      "domain": "wiki",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [
+        "present must_not_appear: 'does not have an article with this exact name'"
+      ],
+      "fail_reason": "validator_aborted",
+      "steps_executed": 4,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 1,
+      "duration_ms": 91601,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "attempt to load the specific non-existent page",
+          "tier": null,
+          "success": true,
+          "validation": "replan",
+          "reason": "page-content failure detected; short-circuit REPLAN: does not have an article with this exact name",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        },
+        {
+          "step": "type",
+          "intent": "search box for 'Cat'",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "page-content failure detected; short-circuit REPLAN: does not have an article with this exact name",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        },
+        {
+          "step": "type",
+          "intent": "enter 'Cat' into the search box",
+          "tier": null,
+          "success": false,
+          "validation": "replan",
+          "reason": "page-content failure detected; short-circuit REPLAN: does not have an article with this exact name",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        },
+        {
+          "step": "type",
+          "intent": "enter 'Cat' into the search box",
+          "tier": null,
+          "success": false,
+          "validation": "replan",
+          "reason": "page-content failure detected; short-circuit REPLAN: does not have an article with this exact name",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        }
+      ]
+    },
+    {
+      "task_id": "edge-002",
+      "pack": "edge_case",
+      "domain": "search",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [],
+      "fail_reason": "wall_clock_exceeded",
+      "steps_executed": 5,
+      "selector_cache_hits": 2,
+      "selector_cache_writes": 1,
+      "duration_ms": 251372,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Wikipedia homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "the search input field",
+          "tier": "cached",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "the search input field",
+          "tier": "cached",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "enter the nonsense search string into the search box",
+          "tier": null,
+          "success": false,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "click",
+          "intent": "submit the search query",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/w/index.php?search=qzxylkjasdf&title=Special%3ASearch&wprov=acrw1_-1"
+        }
+      ]
+    },
+    {
+      "task_id": "edge-003",
+      "pack": "edge_case",
+      "domain": "wiki",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [],
+      "fail_reason": "wall_clock_exceeded",
+      "steps_executed": 4,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 1,
+      "duration_ms": 353368,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "navigate to Search engine Wikipedia page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "click",
+          "intent": "click the edit link for the first section (Introduction)",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://www.wikidata.org/wiki/Q4182287#identifiers"
+        },
+        {
+          "step": "navigate",
+          "intent": "go to the Search engine Wikipedia page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "click",
+          "intent": "click the edit link for the Introduction section",
+          "tier": "get_by_text",
+          "success": false,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "n": 3,
+    "n_ok": 0,
+    "n_result_ok": 0,
+    "n_success_criteria_pass": 0,
+    "fail_reason_histogram": {
+      "validator_aborted": 1,
+      "wall_clock_exceeded": 2
+    },
+    "by_pack": {
+      "edge_case": {
+        "n": 3,
+        "n_ok": 0,
+        "success_rate": 0.0
+      }
+    }
+  }
+}

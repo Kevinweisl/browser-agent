@@ -1,0 +1,195 @@
+{
+  "rows": [
+    {
+      "task_id": "fin-001",
+      "pack": "finance",
+      "domain": "investor_relations",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 22243,
+      "extracted_excerpt": "Skip to main content\nApple\nStore\nMac\niPad\niPhone\nWatch\nAirPods\nTV & Home\nEntertainment\nAccessories\nSupport\n0\n+\nInvestor Relations\nStock Price\nSEC Filings\nLeadership and Governance\nOur Values\nFAQ\nContact\nNews and Results\nInvestor Updates\nFY 26 Second Quarter Results\n\nApple announced results and busin",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "investor relations homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://investor.apple.com/investor-relations/default.aspx"
+        },
+        {
+          "step": "extract",
+          "intent": "headline of the most recent investor news item",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://investor.apple.com/investor-relations/default.aspx"
+        }
+      ]
+    },
+    {
+      "task_id": "fin-002",
+      "pack": "finance",
+      "domain": "edgar",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 32291,
+      "extracted_excerpt": "SEC.gov\nEDGAR\nLatest Filings\nFilings search tools\nEDGAR Company Search Results\nSEC Home \u00bb\nCompany Search \u00bb\nCurrent Page\nMailing Address ONE APPLE PARK WAY CUPERTINO CA 95014\nBusiness Address ONE APPLE PARK WAY CUPERTINO CA 95014 (408) 996-1010\nApple Inc. CIK#: 0000320193 (see all company filings)\n\nS",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "SEC EDGAR 10-K search results for Apple Inc.",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K&dateb=&owner=include&count=40"
+        },
+        {
+          "step": "extract",
+          "intent": "the accession number of the most recent 10-K filing",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "about:blank"
+        }
+      ]
+    },
+    {
+      "task_id": "fin-003",
+      "pack": "finance",
+      "domain": "edgar_full_text",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 28771,
+      "extracted_excerpt": "{\"took\":147,\"timed_out\":false,\"_shards\":{\"total\":50,\"successful\":50,\"skipped\":0,\"failed\":0},\"hits\":{\"total\":{\"value\":315,\"relation\":\"eq\"},\"max_score\":7.6932883,\"hits\":[{\"_index\":\"edgar_file\",\"_id\":\"0000815097-24-000011:ccl-20231130.htm\",\"_score\":7.6932883,\"_source\":{\"ciks\":[\"0000815097\",\"0001125259\"",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "search results page for climate risk 10-K filings",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://efts.sec.gov/LATEST/search-index?q=%22climate+risk%22&dateRange=custom&startdt=2024-01-01&enddt=2024-12-31&forms=10-K"
+        },
+        {
+          "step": "extract",
+          "intent": "the number of matching filings",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "about:blank"
+        }
+      ]
+    },
+    {
+      "task_id": "fin-004",
+      "pack": "finance",
+      "domain": "news_verification",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 10412,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nContents hide\n(Top)\nHistory\nToggle History subsection\nProducts\nToggle Products subsection\nMarketing",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Apple Inc. Wikipedia page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
+        },
+        {
+          "step": "extract",
+          "intent": "text about supply chain and manufacturing",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
+        }
+      ]
+    },
+    {
+      "task_id": "fin-005",
+      "pack": "finance",
+      "domain": "investor_relations",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 29093,
+      "extracted_excerpt": "BERKSHIRE HATHAWAY INC.\n3555 Farnam Street\nOmaha, NE 68131\nOfficial Home Page\u00a0\n\nA Message from Warren E. Buffett\n\t\nFraudulent Claims Regarding Mr. Buffett's Endorsements of Investment Products and Political Candidates\n\n\nAnnual & Interim Reports\nUpdated May 2, 2026\n\n\t\nNews Releases from Berkshire Hat",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://www.berkshirehathaway.com/"
+        },
+        {
+          "step": "extract",
+          "intent": "find the most recent annual report link",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://www.berkshirehathaway.com/"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "n": 5,
+    "n_ok": 5,
+    "n_result_ok": 5,
+    "n_success_criteria_pass": 5,
+    "fail_reason_histogram": {
+      "completed": 5
+    },
+    "by_pack": {
+      "finance": {
+        "n": 5,
+        "n_ok": 5,
+        "success_rate": 1.0
+      }
+    }
+  }
+}

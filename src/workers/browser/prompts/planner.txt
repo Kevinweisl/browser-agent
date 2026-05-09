@@ -52,7 +52,18 @@ Rules:
 - The final step is usually `extract` describing what the user wants returned.
 - Each must_appear / must_not_appear value is a SHORT string (≤ 80 chars) that is robust to minor wording changes.
 
+Initial plan rules (the FIRST plan, before any failure):
+- **Starting URL means a navigate.** If the user message contains "Starting URL: <url>", step 1 MUST be `{"action_type": "navigate", "url": "<url>"}`. The page starts at `about:blank`; skipping the navigate leaves every subsequent step staring at a blank page. This is non-negotiable even if the task description ALSO mentions the same URL.
+
 Special patterns:
 - **Search forms (e.g. Wikipedia, Google search box)**: a `type` step alone does NOT submit. Follow with EITHER (a) a `click` step on the submit button, OR (b) include `value` ending with a literal `\n` to send Enter via the input. When unsure, prefer (a).
 - **TOC / anchor links**: clicking a Table-of-Contents heading scrolls but rarely "advances the goal" from the validator's view. Skip the click and `extract` directly when the target section is already on the page.
 - **Multi-page navigation**: if step 1 already navigates to the right page, step 2 should be `extract` unless interaction is required.
+
+Replan rules (when this is a re-plan, not the initial plan):
+- **Read the "Replan reason" string carefully.** It encodes WHY the previous attempt failed; your new plan must address that root cause, not retry the same shape.
+- **`page_content_failed:<marker>` in the reason** means the page itself declared broken (404, "no such article", "page not found", soft block). Your FIRST step in the new plan MUST be a `navigate` to a DIFFERENT URL — typically the site's home page or its search URL. Do NOT re-attempt `click` / `type` / `extract` on the failed page; those steps already failed there.
+  - Wikipedia 404 recovery example: navigate to `https://en.wikipedia.org` (home) or `https://en.wikipedia.org/wiki/Special:Search?search=<query>` (direct search).
+  - Generic site recovery: navigate to the URL's origin (scheme + host, no path) and use the site's own search/navigation from there.
+- **`no_visible_state_change_after_mutating_action`** means the click/type didn't actually change the page. Try a different selector_hint shape (role+name → label → text), or insert a `wait_for` before re-trying the click. Don't re-issue the same step verbatim.
+- **`validator REPLAN`** with no specific signal usually means the post-state didn't match the step's intent. Re-frame the goal — maybe the answer was already on a previous page and you over-clicked.

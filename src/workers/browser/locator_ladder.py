@@ -301,18 +301,27 @@ async def _narrow(
 ) -> Locator | None:
     """Try to narrow a locator down to exactly one element via a chain.
 
-    Order (per research delta §1, Stagehand's observe-style ranking, but
-    WITHOUT the `.first()` fallback after we measured it caused regressions):
+    Order (per research delta §1, Stagehand's observe-style ranking):
       1. raw locator             — already unambiguous, done
       2. .filter(visible=True)   — kills off-screen / dialog twins
       3. .filter(has_text=hints.text)
       4. .filter(has_text=free_text)
-      Returns None when still ambiguous; ladder tries the next tier.
+      5. first-visible fallback (gen-005 lesson) — only when EVERY narrowing
+         step failed and we still have ≥2 visible candidates: return the
+         first visible. This is the bounded `.first()` we previously avoided.
+         Note the bound: it only fires *after* visible filter has been
+         applied, so we never first()-pick from a raw multi-match (which
+         was what regressed v2 — that picked Wikipedia TOC entries over
+         body headers when both were "matches" but one was off-screen).
+      Returns None when no candidates remain.
 
-    Why no `.first()`: empirically `.first()` clicked the wrong element
-    (e.g. Wikipedia TOC entry vs body header) often enough that the
-    validator REPLAN'd anyway, paying for both a bad action and a bad
-    validate. Better to fail this tier and let the planner replan.
+    Why bounded `.first()` and not unbounded: v2 of the eval tried
+    `.first()` after Step 1 with no visibility filter, regressed 6/10 → 4/10
+    because the first match was often the off-screen / nav-chrome twin of
+    the intended element. After the visible-filter prefix is applied, the
+    candidate set is "things the user can see right now" — first of those
+    is the document-order topmost, which is what gen-005's lesson asked
+    for. (task2-browser-agent.md §gen-005 spelled out this exact heuristic.)
     """
     try:
         n = await locator.count()
@@ -355,7 +364,17 @@ async def _narrow(
             n_f = 0
         if n_f == 1:
             return with_free
-        # don't narrow further if still ambiguous — fall through to None
+        # don't narrow further if still ambiguous — fall through to step 4
+
+    # Step 4: bounded first-visible fallback (gen-005 lesson). Only fires
+    # when we still have ≥2 visible candidates AND every narrowing step
+    # above failed. We DO NOT fall back if `n_v == 0` — visibility is the
+    # bound that prevents v2's regression.
+    if n_v >= 2:
+        log.info("ambiguous-element first-visible fallback "
+                 "(hints=%s, free_text=%r, n_visible=%d)",
+                 hints.model_dump(), free_text, n_v)
+        return locator.first
 
     log.info("locator narrowed but still ambiguous "
              "(hints=%s, free_text=%r) — skipping tier", hints.model_dump(), free_text)

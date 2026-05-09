@@ -1,0 +1,213 @@
+{
+  "rows": [
+    {
+      "task_id": "edge-001",
+      "pack": "edge_case",
+      "domain": "wiki",
+      "ok": false,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [
+        "present must_not_appear: 'does not have an article with this exact name'"
+      ],
+      "fail_reason": "completed",
+      "steps_executed": 3,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 1,
+      "duration_ms": 91792,
+      "extracted_excerpt": "Jump to content\nMain menu\nCat\nSmall domesticated carnivorous mammal\nCatholic Church\nChristian church based in Rome\nCatherine, Princess of Wales\nMember of the British royal family (born 1982)\nCatherine the Great\nEmpress of Russia from 1762 to 1796\nCattle\nLarge, domesticated, cloven-hooved herbivores\n",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "attempt to load the specific non-existent page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        },
+        {
+          "step": "type",
+          "intent": "enter search term into Wikipedia search box",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        },
+        {
+          "step": "extract",
+          "intent": "extract the opening description of the Cat article",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        }
+      ]
+    },
+    {
+      "task_id": "edge-002",
+      "pack": "edge_case",
+      "domain": "search",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [
+        "missing must_appear: 'Search results'",
+        "present must_not_appear: 'the free encyclopedia that anyone can edit'"
+      ],
+      "fail_reason": "validator_aborted",
+      "steps_executed": 5,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 3,
+      "duration_ms": 164652,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Wikipedia homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "the search input field",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "the search input field",
+          "tier": "get_by_label",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "navigate",
+          "intent": "Wikipedia homepage",
+          "tier": null,
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "the search input field",
+          "tier": "get_by_label",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        }
+      ]
+    },
+    {
+      "task_id": "edge-003",
+      "pack": "edge_case",
+      "domain": "wiki",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [],
+      "fail_reason": "wall_clock_exceeded",
+      "steps_executed": 7,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 3,
+      "duration_ms": 249247,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "navigate to the Search engine Wikipedia article",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "click",
+          "intent": "the edit link for the first section (Introduction)",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://www.wikidata.org/wiki/Q4182287#identifiers"
+        },
+        {
+          "step": "navigate",
+          "intent": "Search engine Wikipedia article",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "click",
+          "intent": "the edit link for the first section (Introduction)",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://www.wikidata.org/wiki/Q4182287#identifiers"
+        },
+        {
+          "step": "navigate",
+          "intent": "navigate to the Search_engine Wikipedia page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "click",
+          "intent": "the edit link for the first section (Introduction)",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://www.wikidata.org/wiki/Q4182287#identifiers"
+        },
+        {
+          "step": "navigate",
+          "intent": "Wikipedia Search engine article",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "n": 3,
+    "n_ok": 0,
+    "n_result_ok": 1,
+    "n_success_criteria_pass": 1,
+    "fail_reason_histogram": {
+      "completed": 1,
+      "validator_aborted": 1,
+      "wall_clock_exceeded": 1
+    },
+    "by_pack": {
+      "edge_case": {
+        "n": 3,
+        "n_ok": 0,
+        "success_rate": 0.0
+      }
+    }
+  }
+}

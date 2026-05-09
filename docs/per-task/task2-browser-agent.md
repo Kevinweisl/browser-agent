@@ -194,3 +194,115 @@ multiple buttons named "Search" on the page header). Three replans, each
 re-trying variations on the same dead-end, exhausted the replan budget.
 **Lesson for next iteration**: when `_has_one` rejects a 2+ count, return
 top-most or first-visible rather than failing outright.
+
+## Edge-case eval (added 2026-05-09)
+
+The baseline 10-task eval is happy-path heavy — it validates that the
+architecture executes correctly when the page behaves. The brief grades
+"故意挑 edge case" + "silent failure 的防範" + "self-correcting with
+substance, not try/except retry", and the baseline doesn't probe those
+axes. Three deliberately failing tasks were added in the `edge_case` pack
+to exercise self-correction, silent-failure prevention, and locator
+narrowing under adversarial conditions.
+
+| Task | Probe | Trip wire |
+|---|---|---|
+| `edge-001` stale-url | Wikipedia 404 returned with HTTP 200 + valid URL | Agent must detect content-level failure and recover by navigating elsewhere — not declare victory because navigation "succeeded" |
+| `edge-002` empty-search | Searching a nonsense string on Wikipedia | Agent must reach the search-results page AND extract "no results" honestly, not fabricate a hit |
+| `edge-003` ambiguous-edit | Wikipedia article with multiple "edit" links | Locator must narrow without false-`.first()` regression; if it can't, agent must replan with a different selector |
+
+### Iteration log
+
+| Run | Result | Change | Take-away |
+|---|---|---|---|
+| v1 | 0/3 | Initial — fixes 1+2 not yet implemented | edge-001 stayed on 404 page; edge-002 stuck on home page; edge-003 timed out re-narrowing the same dead-end. Confirmed the gaps the audit predicted. |
+| v2 | 0/3 | Added `silent_failure.detect_content_failure` (Layer 0 markers like "does not have an article") + handlers short-circuit REPLAN; added `_narrow` first-visible fallback per gen-005 lesson | Layer 0 fired correctly on every step of edge-001 (`reason: page-content failure detected; short-circuit REPLAN`), but the planner kept re-issuing `type` actions on the 404 page instead of navigating away. Detection worked; recovery didn't. |
+| v3 | **1/3** (edge-001 PASS) | Added "Replan rules" section to `planner.txt`: when reason contains `page_content_failed:`, the next plan MUST start with a `navigate` to a different URL — not retry actions on the failed page | edge-001 now navigates from the 404 page to Wikipedia home and recovers. Self-correction is now substantive, not just signal-emitting. |
+
+### Why edge-002 and edge-003 stayed FAIL — known limitations
+
+These are documented rather than fixed because the failure modes reveal
+genuinely hard sub-problems that are out of scope for this submission's
+incremental improvement budget.
+
+#### edge-002 — Wikipedia search-form interaction is brittle
+
+The agent reaches `https://en.wikipedia.org` correctly and starts to type
+the nonsense query, but the type/submit dance on Wikipedia's
+`#searchInput` requires either (a) appending `\n` to the typed value to
+send Enter, (b) clicking the search submit button, or (c) waiting for the
+auto-suggest dropdown and selecting from it. The planner's prompt covers
+(a) and (b) generically, but the actual eval-runner trajectory shows the
+type step keeping focus on the input without a successful submit before
+the wall clock expires. Root causes (mostly Wikipedia-specific):
+
+- Wikipedia's search input has multiple submit pathways (header form,
+  HeaderSearch suggestion list, `Special:Search` URL) that don't all
+  respond to a single `fill()` + Enter. The Actor's `type` action calls
+  `locator.fill()`, which sets the value but doesn't trigger Enter
+  consistently across the input variants.
+- The Actor doesn't wait for the suggestion dropdown before clicking
+  Search, so the dropdown sometimes intercepts the click.
+- The success_criteria for this task is strict — it requires the literal
+  phrase "no results" / "did not match" / "no matching" in the extracted
+  content. Wikipedia's actual empty-result phrasing depends on the
+  rendering path; some flows say "There were no results matching the
+  query", others render JSON, others redirect. A more robust criterion
+  would accept *any* of: substring "no results", substring "0 results",
+  presence of `class="mw-search-nonefound"` in raw HTML.
+
+The right fix is a search-action helper that knows about these variants;
+the Actor today only knows `fill`. Out of scope for this submission.
+
+#### edge-003 — first-visible fallback isn't enough on Wikipedia "edit"
+
+The `_narrow` first-visible fallback (gen-005 lesson) DID fire here — the
+v2 trajectory showed `click` actions resolving to elements visible on
+the page. But the first visible "edit" link on Wikipedia's `Search_engine`
+article is the **identifiers edit anchor in the Wikidata sidebar** —
+which navigates to `wikidata.org` (a different domain entirely), not to
+the MediaWiki editing view. The first-visible heuristic returned a real
+"edit"-named element; it just wasn't the section-level edit the task
+intended.
+
+Two real fixes are possible, neither cheap:
+
+1. **Domain whitelist** in the locator narrowing — only return elements
+   whose `href` stays on the same origin. This is principled but adds
+   complexity to a fast path that should stay fast.
+2. **Per-task selector_hints** that disambiguate at plan time — the
+   planner could emit `selector_hints: {role: "link", text: "edit",
+   css: "[href*='action=edit']"}` to anchor on the MediaWiki edit URL
+   pattern. This works but pushes domain knowledge into the planner.
+
+Option 2 is the cleaner path long-term but requires planner-side prompt
+engineering for every domain the agent should "know" — Wikipedia, MediaWiki,
+GitHub, etc. That's a research task, not an iteration on this submission.
+
+The deeper lesson echoes gen-005: "first-visible" is a useful escape
+hatch for ambiguity, but it can only do so much. When the page has
+many semantically-distinct elements that all match a single intent string
+("edit"), the locator can't pick the right one without help from the planner.
+
+### Architectural take-aways from the edge-case pack
+
+1. **Layer 0 (page-content failure detector) is the most important
+   addition since v7.** It catches the entire class of "HTTP 200 but
+   semantically broken" pages — soft 404s, "service unavailable",
+   "access denied" — that no other layer can see. The marker list is
+   short and conservative; expanding it is cheap.
+2. **Detection without recovery is half a fix.** v2 had Layer 0 firing
+   on every step of edge-001 but the eval still failed because the
+   planner didn't know what to do with the signal. The planner-side
+   replan rule was the load-bearing piece. This generalises: every new
+   silent-failure signal needs a paired planner rule that says what to
+   do about it, otherwise it's just noise.
+3. **The gen-005 lesson is correct but incomplete.** First-visible
+   fallback is the right escape hatch when narrowing exhausts, but it
+   can't substitute for missing semantic information. edge-003 shows
+   the limit: the first visible "edit" was real, just wrong.
+4. **Honest 1/3 is more useful than fake 3/3.** Fixing edge-002 and
+   edge-003 to PASS would have required either over-fitting prompts to
+   Wikipedia's quirks or relaxing success_criteria to the point of
+   triviality. Both moves would have hidden the architectural limits
+   the eval was designed to expose.

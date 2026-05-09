@@ -1,0 +1,222 @@
+{
+  "rows": [
+    {
+      "task_id": "gen-001",
+      "pack": "generic",
+      "domain": "wiki",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 19786,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nContents hide\n(Top)\nBackground\nToggle Background subsection\nSuccession crisis in England\nTostig and",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Battle of Hastings Wikipedia page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Battle_of_Hastings"
+        },
+        {
+          "step": "extract",
+          "intent": "casualties section death toll figures",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Battle_of_Hastings"
+        }
+      ]
+    },
+    {
+      "task_id": "gen-002",
+      "pack": "generic",
+      "domain": "wiki",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 104603,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nMain Page\nTalk\nRead\nView source\nView history\nTools\nAppearance hide\nText\nSmall\nStandard\nLarge\nWidth\n",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Wikipedia Main Page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "extract",
+          "intent": "total number of articles",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        }
+      ]
+    },
+    {
+      "task_id": "gen-003",
+      "pack": "generic",
+      "domain": "docs",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 17353,
+      "extracted_excerpt": "index\nmodules |\nnext |\nprevious |\n Python \u00bb \nGreek | \u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac\nEnglish\nSpanish | espa\u00f1ol\nFrench | fran\u00e7ais\nItalian | italiano\nJapanese | \u65e5\u672c\u8a9e\nKorean | \ud55c\uad6d\uc5b4\nPolish | polski\nBrazilian Portuguese | Portugu\u00eas brasileiro\nRomanian | Rom\u00e2ne\u0219te\nTurkish | T\u00fcrk\u00e7e\nSimplified Chinese | \u7b80\u4f53\u4e2d\u6587\nTraditional Chinese | \u7e41",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "asyncio documentation page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://docs.python.org/3/library/asyncio.html"
+        },
+        {
+          "step": "extract",
+          "intent": "first sentence describing asyncio.Task",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://docs.python.org/3/library/asyncio.html"
+        }
+      ]
+    },
+    {
+      "task_id": "gen-004",
+      "pack": "generic",
+      "domain": "form",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 2,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 10563,
+      "extracted_excerpt": "Example Domain\n\nThis domain is for use in documentation examples without needing permission. Avoid use in operations.\n\nLearn more",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://example.com/"
+        },
+        {
+          "step": "extract",
+          "intent": "heading text and the link on the page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://example.com/"
+        }
+      ]
+    },
+    {
+      "task_id": "gen-005",
+      "pack": "generic",
+      "domain": "search",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 5,
+      "selector_cache_hits": 1,
+      "selector_cache_writes": 1,
+      "duration_ms": 225002,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nContents hide\n(Top)\nEarly life and education\nEarly engineering activities\nWorld War II\nToggle World",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Wikipedia homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "search input field",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "search input field",
+          "tier": null,
+          "success": false,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "click",
+          "intent": "search submit button",
+          "tier": "cached",
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Vannevar_Bush"
+        },
+        {
+          "step": "extract",
+          "intent": "Vannevar Bush birth year",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Vannevar_Bush"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "n": 5,
+    "n_ok": 5,
+    "n_result_ok": 5,
+    "n_success_criteria_pass": 5,
+    "fail_reason_histogram": {
+      "completed": 5
+    },
+    "by_pack": {
+      "generic": {
+        "n": 5,
+        "n_ok": 5,
+        "success_rate": 1.0
+      }
+    }
+  }
+}

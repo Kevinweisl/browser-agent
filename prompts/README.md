@@ -19,6 +19,7 @@ you want a specific decision.
 | 2026-05-01 | [sec-httpx-fallback](2026-05-01-sec-httpx-fallback.md) | Route SEC EDGAR hosts through `httpx` not Playwright; "self-correction" includes recognising when the browser is the wrong primitive |
 | 2026-05-01 | [eval-determinism-3run](2026-05-01-eval-determinism-3run.md) | Run the 10-task eval three times to separate single-shot luck from reproducible pass-rate |
 | 2026-05-09 | [self-maintenance-completion](2026-05-09-self-maintenance-completion.md) | Wire aria-fingerprint healing path that was scaffolded but unused; close the gap between "store fingerprint" and "use fingerprint" |
+| 2026-05-09 | [edge-case-eval](2026-05-09-edge-case-eval.md) | Three deliberate-failure tasks (stale-url / empty-search / ambiguous-edit); 0/3 → 1/3 across three iterations; detection without recovery is half a fix |
 
 ## What's NOT here
 

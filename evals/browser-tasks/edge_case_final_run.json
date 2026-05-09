@@ -1,0 +1,173 @@
+{
+  "rows": [
+    {
+      "task_id": "edge-001",
+      "pack": "edge_case",
+      "domain": "wiki",
+      "ok": false,
+      "result_ok": true,
+      "success_criteria_pass": false,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 4,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 1,
+      "duration_ms": 47298,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nEnglish\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nWikidata:Events/Coordinate Me 2026\nProject page\nDiscussion\nRead\nView source\nView history\nTo",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "attempt to load the specific broken URL",
+          "tier": null,
+          "success": true,
+          "validation": "replan",
+          "reason": "page-content failure detected; short-circuit REPLAN: does not have an article with this exact name",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        },
+        {
+          "step": "navigate",
+          "intent": "navigate to Wikipedia search results for 'Cat'",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Cat"
+        },
+        {
+          "step": "click",
+          "intent": "click the 'Cat' article link in search results",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://www.wikidata.org/wiki/Wikidata:Events/Coordinate_Me_2026"
+        },
+        {
+          "step": "extract",
+          "intent": "verify current page is the Cat article and extract opening description",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://www.wikidata.org/wiki/Wikidata:Events/Coordinate_Me_2026"
+        }
+      ]
+    },
+    {
+      "task_id": "edge-002",
+      "pack": "edge_case",
+      "domain": "search",
+      "ok": false,
+      "result_ok": true,
+      "success_criteria_pass": false,
+      "oracle_violations": [
+        "missing must_appear: 'Search results'",
+        "present must_not_appear: 'the free encyclopedia that anyone can edit'"
+      ],
+      "fail_reason": "completed",
+      "steps_executed": 4,
+      "selector_cache_hits": 1,
+      "selector_cache_writes": 0,
+      "duration_ms": 41458,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch for pages containing qzxylkjasdf\nSearch\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nMain Page\nTalk\nRead\nView source\nView history\nTools\nAppearan",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "wikipedia homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "search input field",
+          "tier": "cached",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "search input field",
+          "tier": null,
+          "success": false,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "extract",
+          "intent": "search result status",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        }
+      ]
+    },
+    {
+      "task_id": "edge-003",
+      "pack": "edge_case",
+      "domain": "wiki",
+      "ok": false,
+      "result_ok": true,
+      "success_criteria_pass": false,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 3,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 45368,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nContents hide\n(Top)\nHistory\nToggle History subsection\nPre-1990s\n1990s: Birth of search engines\n2000",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "navigate to the Search engine article",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "click",
+          "intent": "the edit link for the first section",
+          "tier": "get_by_text",
+          "success": false,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "extract",
+          "intent": "extract the heading of the edit page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "n": 3,
+    "n_ok": 0,
+    "n_result_ok": 3,
+    "n_success_criteria_pass": 0,
+    "fail_reason_histogram": {
+      "completed": 3
+    },
+    "by_pack": {
+      "edge_case": {
+        "n": 3,
+        "n_ok": 0,
+        "success_rate": 0.0
+      }
+    }
+  }
+}

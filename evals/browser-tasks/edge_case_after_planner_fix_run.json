@@ -1,0 +1,174 @@
+{
+  "rows": [
+    {
+      "task_id": "edge-001",
+      "pack": "edge_case",
+      "domain": "wiki",
+      "ok": true,
+      "result_ok": true,
+      "success_criteria_pass": true,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 5,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 1,
+      "duration_ms": 100254,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nContents hide\n(Top)\nEtymology and naming\nTaxonomy\nEvolution\nToggle Evolution subsection\nCharacteris",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "attempt to load the broken URL",
+          "tier": null,
+          "success": true,
+          "validation": "replan",
+          "reason": "page-content failure detected; short-circuit REPLAN: does not have an article with this exact name",
+          "url": "https://en.wikipedia.org/wiki/This_Page_Definitely_Does_Not_Exist_2026"
+        },
+        {
+          "step": "navigate",
+          "intent": "navigate to Wikipedia search results for Cat",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Cat"
+        },
+        {
+          "step": "click",
+          "intent": "click the main Cat article link in search results",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Cat"
+        },
+        {
+          "step": "navigate",
+          "intent": "navigate directly to the Cat article",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Cat"
+        },
+        {
+          "step": "extract",
+          "intent": "extract the opening description of the Cat article",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Cat"
+        }
+      ]
+    },
+    {
+      "task_id": "edge-002",
+      "pack": "edge_case",
+      "domain": "search",
+      "ok": false,
+      "result_ok": false,
+      "success_criteria_pass": false,
+      "oracle_violations": [
+        "missing must_appear: 'Search results'",
+        "present must_not_appear: 'the free encyclopedia that anyone can edit'"
+      ],
+      "fail_reason": "wall_clock_exceeded",
+      "steps_executed": 3,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 1,
+      "duration_ms": 306203,
+      "extracted_excerpt": "",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "Wikipedia homepage",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "the search input field",
+          "tier": "get_by_role",
+          "success": true,
+          "validation": "replan",
+          "reason": "vote pick=replan confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        },
+        {
+          "step": "type",
+          "intent": "the search input field",
+          "tier": null,
+          "success": false,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Main_Page"
+        }
+      ]
+    },
+    {
+      "task_id": "edge-003",
+      "pack": "edge_case",
+      "domain": "wiki",
+      "ok": false,
+      "result_ok": true,
+      "success_criteria_pass": false,
+      "oracle_violations": [],
+      "fail_reason": "completed",
+      "steps_executed": 3,
+      "selector_cache_hits": 0,
+      "selector_cache_writes": 0,
+      "duration_ms": 71212,
+      "extracted_excerpt": "Jump to content\nMain menu\nSearch\nDonate\nCreate account\nLog in\n\t\n\nJoin the Wiki\u00addata contest and help improve geo\u00adgraphi\u00adcally located items in 28 coun\u00adtries and regions!\n\nCoordinate Me\u00a0 \u276d\u00a0\u00a0MAY\u00a02026\n\n\t\nContents hide\n(Top)\nHistory\nToggle History subsection\nPre-1990s\n1990s: Birth of search engines\n2000",
+      "trajectory_summary": [
+        {
+          "step": "navigate",
+          "intent": "navigate to Search engine article",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=1.00",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "click",
+          "intent": "the edit link for the first section",
+          "tier": "get_by_text",
+          "success": false,
+          "validation": "pass",
+          "reason": "vote pick=pass confidence=0.00 (fallback used \u2014 parsers failed or tied)",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        },
+        {
+          "step": "extract",
+          "intent": "extract the heading of the edit page",
+          "tier": null,
+          "success": true,
+          "validation": "pass",
+          "reason": "passive action succeeded; validator short-circuit",
+          "url": "https://en.wikipedia.org/wiki/Search_engine"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "n": 3,
+    "n_ok": 1,
+    "n_result_ok": 2,
+    "n_success_criteria_pass": 1,
+    "fail_reason_histogram": {
+      "completed": 2,
+      "wall_clock_exceeded": 1
+    },
+    "by_pack": {
+      "edge_case": {
+        "n": 3,
+        "n_ok": 1,
+        "success_rate": 0.333
+      }
+    }
+  }
+}
