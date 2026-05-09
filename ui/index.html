@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>browser-agent demo</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <h1>browser-agent</h1>
+    <small class="subtitle">Task 2 of AI Coding Test 2026 &middot; Planner / Actor / Validator</small>
+  </div>
+  <div class="header-right">
+    <span id="eval-banner" class="eval-banner" aria-live="polite">eval&hellip;</span>
+    <a class="repo-link" href="https://github.com/Kevinweisl/browser-agent" target="_blank" rel="noopener">repo</a>
+  </div>
+</header>
+
+<main>
+  <!-- Input panel ─────────────────────────────────────────────── -->
+  <section class="card" id="input-card">
+    <div class="card-head">
+      <h2>1. Submit task</h2>
+      <span id="status-badge" class="badge badge-idle">idle</span>
+    </div>
+
+    <label for="task-input">Task description (natural language)</label>
+    <textarea id="task-input" rows="3"
+              placeholder="e.g. go to en.wikipedia.org and find the casualty count from the Battle of Hastings"
+              aria-label="Task description"></textarea>
+
+    <div class="row">
+      <div class="field">
+        <label for="starting-url">Starting URL <small>(optional)</small></label>
+        <input id="starting-url" type="text" placeholder="https://...">
+      </div>
+      <div class="field field-narrow">
+        <label for="max-steps">max_steps</label>
+        <input id="max-steps" type="number" value="25" min="1" max="50">
+      </div>
+      <div class="field field-narrow">
+        <label for="max-seconds">max_seconds</label>
+        <input id="max-seconds" type="number" value="180" min="10" max="300">
+      </div>
+    </div>
+
+    <div class="examples">
+      <span class="examples-label">Example tasks &mdash; click to fill:</span>
+      <button class="example" type="button" data-example="wiki">
+        Wikipedia: Battle of Hastings casualties
+      </button>
+      <button class="example" type="button" data-example="sec">
+        SEC EDGAR: latest Apple 10-K accession
+      </button>
+      <button class="example" type="button" data-example="edge">
+        Edge case: 404 page (self-correction demo)
+      </button>
+    </div>
+
+    <div class="run-row">
+      <button id="run-btn" type="button" class="btn-primary">Run task</button>
+      <span id="run-msg" class="run-msg"></span>
+    </div>
+  </section>
+
+  <!-- Plan panel ──────────────────────────────────────────────── -->
+  <section class="card collapsible" id="plan-card" hidden>
+    <div class="card-head clickable" id="plan-toggle">
+      <h2>2. Planner output <small id="plan-summary"></small></h2>
+      <span class="chevron">&#9662;</span>
+    </div>
+    <ol id="plan-list" class="plan-list"></ol>
+  </section>
+
+  <!-- Trajectory panel ───────────────────────────────────────── -->
+  <section class="card" id="trajectory-card" hidden>
+    <div class="card-head">
+      <h2>3. Trajectory <small id="trajectory-summary"></small></h2>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="dot dot-cached"></span>cached selector</span>
+      <span class="legend-item"><span class="dot dot-healed"></span>healed selector</span>
+      <span class="legend-item"><span class="dot dot-replan"></span>replan triggered</span>
+      <span class="legend-item"><span class="dot dot-abort"></span>validator abort</span>
+    </div>
+    <table class="trajectory">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>action</th>
+          <th>intent / target</th>
+          <th>tier</th>
+          <th>selector</th>
+          <th>flags</th>
+          <th>validator</th>
+          <th>signals</th>
+        </tr>
+      </thead>
+      <tbody id="trajectory-body"></tbody>
+    </table>
+  </section>
+
+  <!-- Result panel ───────────────────────────────────────────── -->
+  <section class="card" id="result-card" hidden>
+    <div class="card-head">
+      <h2>4. Result</h2>
+      <span id="result-status" class="badge"></span>
+    </div>
+    <div class="stats" id="result-stats"></div>
+    <div class="result-block">
+      <h3>Extracted content</h3>
+      <pre id="result-extracted">&mdash;</pre>
+    </div>
+    <div class="result-block" id="fail-block" hidden>
+      <h3>Failure reason</h3>
+      <pre id="result-fail"></pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <small>
+    Single-concurrency demo &middot; in-memory task registry &middot; 5&nbsp;min hard cap.
+    Source code, prompts, and eval results in
+    <a href="https://github.com/Kevinweisl/browser-agent" target="_blank" rel="noopener">the repo</a>.
+  </small>
+</footer>
+
+<script src="/static/app.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Keep the deploy image small and reproducible. None of these belong
+# inside the running container.
+
+# VCS / CI noise
+.git
+.github
+.gitignore
+
+# Python build/test caches
+.venv
+venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+dist
+build
+*.egg-info
+
+# Local-only working notes (kept out of public repo too, but be explicit)
+tasks
+
+# Secrets — never bake into image
+.env
+*.env
+!.env.example
+
+# Editor / OS noise
+.vscode
+.idea
+.DS_Store
+
+# Node / front-end junk that doesn't apply here but keeps the file
+# resilient if a sub-tool ever drops a node_modules/.
+node_modules
+
+# tests/ and docs/ are intentionally NOT excluded:
+#   - tests/ documents the expected behaviour for reviewers reading the image
+#   - docs/ is referenced from README and is small
